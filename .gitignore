@@ -1,0 +1,11 @@
+# ignore python, vim autogenerates
+*.pyc
+*~
+*.swp
+
+# ignore the actual config file
+config.json
+
+# don't commit logs or fortune files
+fortunes/*
+logs/*
