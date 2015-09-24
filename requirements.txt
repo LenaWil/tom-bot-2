@@ -1,6 +1,6 @@
-Yowsup==0.2
+-e git://github.com/tgalal/yowsup.git#egg=yowsupgit
 argparse==1.2.1
-fortune==1.0
+-e git+https://github.com/spasticVerbalizer/fortune.git#egg=fortunegit
 python-dateutil==2.4.2
 six==1.9.0
 wsgiref==0.1.2

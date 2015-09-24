@@ -13,6 +13,7 @@ from yowsup.stacks import YowStack, YOWSUP_CORE_LAYERS
 from yowsup.layers.axolotl import YowAxolotlLayer
 from yowsup import env
 import json
+import os
 
 def byteify(input):
     """ 
@@ -28,10 +29,11 @@ def byteify(input):
     else:
         return input
 
-with open('config.json', 'r') as configfile:
-    config = byteify(json.loads(configfile.read()))
-
-CREDENTIALS = (config['username'], config['password'])
+CREDENTIALS = (os.environ.get('WA_USER', 'changeme'), os.environ.get('WA_PASS', 'changeme')
+if 'changeme' in credentials:
+    with open('config.json', 'r') as configfile:
+        config = byteify(json.loads(configfile.read()))
+        CREDENTIALS = (config['username'], config['password'])
 
 if __name__==  "__main__":
     layers = (
