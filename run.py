@@ -29,8 +29,8 @@ def byteify(input):
     else:
         return input
 
-CREDENTIALS = (os.environ.get('WA_USER', 'changeme'), os.environ.get('WA_PASS', 'changeme')
-if 'changeme' in credentials:
+CREDENTIALS = (os.environ.get('WA_USER', 'changeme'), os.environ.get('WA_PASS', 'changeme'))
+if CREDENTIALS[0] == 'changeme' or CREDENTIALS[1] == 'changeme':
     with open('config.json', 'r') as configfile:
         config = byteify(json.loads(configfile.read()))
         CREDENTIALS = (config['username'], config['password'])
