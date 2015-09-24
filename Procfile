@@ -1,1 +1,1 @@
-bot: python run.py
+bot: bash keepalive.sh
