@@ -38,7 +38,7 @@ if CREDENTIALS[0] == 'changeme' or CREDENTIALS[1] == 'changeme':
         CREDENTIALS = (config['username'], config['password'])
 
 if __name__==  "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     layers = (
         TomBotLayer,
         YowParallelLayer([YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, 
@@ -54,4 +54,4 @@ if __name__==  "__main__":
 
     stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))   #sending the connect signal
 
-    stack.loop() #this is the program mainloop
+    stack.loop(timeout = 0.5, discrete = 0.5) #this is the program mainloop

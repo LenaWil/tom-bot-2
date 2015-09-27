@@ -42,7 +42,7 @@ class TomBotLayer(YowInterfaceLayer):
 
     def onEvent(self, layerEvent):
         logging.info('Event {}'.format(layerEvent.getName()))
-        if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECT:
+        if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
             reason = layerEvent.getArg('reason')
             logging.warning('Connection lost: {}'.format(reason))
             if reason == 'Connection Closed':
@@ -101,18 +101,16 @@ class TomBotLayer(YowInterfaceLayer):
         ]
     def react(self, message):
         functions = { # Has to be inside function because of self.
-            '!8BALL'    : self.eightball,
-            '!FORTUNE'  : self.fortune,
-            '!SHUTDOWN' : self.stopmsg,
-            '!PING'     : self.ping,
-            '!HELP'     : self.help,
             'HELP'      : self.help,
+            'FORCELOG'  : self.forcelog,
             '8BALL'     : self.eightball,
             'FORTUNE'   : self.fortune,
             'SHUTDOWN'  : self.stopmsg,
             'PING'      : self.ping,
             'CALCULATE' : self.wolfram,
             'BEREKEN'   : self.wolfram,
+            'DEFINE'    : self.duckduckgo,
+            'DDG'       : self.duckduckgo,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -128,13 +126,18 @@ class TomBotLayer(YowInterfaceLayer):
             if isgroup:
                 return # no "unknown command!" spam
             response = self.unknownCommand(message)
-        replyMessage = TextMessageProtocolEntity(
-                response, to = message.getFrom()
-                )
-        self.toLower(replyMessage)
+        if response:
+            replyMessage = TextMessageProtocolEntity(
+                    response, to = message.getFrom()
+                    )
+            self.toLower(replyMessage)
     
     def ping(self, message):
         return "Pong"
+
+    def forcelog(self, message):
+        logging.info('Forcelog from {}: {}'.format(message.getFrom(), message.getBody()))
+        return False
 
     def help(self, message):
         return "Git gud"
@@ -173,15 +176,25 @@ class TomBotLayer(YowInterfaceLayer):
         except:
             return "Something went wrong, go bug my author!"
     
-    def wolfram(self, message):
-        if not self.wolframClient:
-            return 'Geen verbinding met WolframAlpha.'
-        # strip trigger and command
+    def extract_query(self, message, cmdlength = 1):
+        """ Remove the command and trigger from the message body, return the stripped text."""
         content = message.getBody()
         if message.participant:
-            query = ' '.join(content.split()[2:])
+            offset = 1 + cmdlength
         else:
-            query = ' '.join(content.split()[1:])
+            offset = cmdlength
+        return ' '.join(content.split()[offset:])
+
+    def duckduckgo(self, message):
+        """ Beantwoord vraag met DuckDuckGo's API"""
+        query = self.extract_query(message)
+        return duckduckgo.get_zci(query)
+
+    def wolfram(self, message):
+        """ Beantwoord vraag met WolframAlpha """
+        if not self.wolframClient:
+            return 'Geen verbinding met WolframAlpha.'
+        query = self.extract_query(message)
         logging.debug('Query to WolframAlpha: {}'.format(query))
         try:
             entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
@@ -189,8 +202,9 @@ class TomBotLayer(YowInterfaceLayer):
             result = self.wolframClient.query(query)
             entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
             self.toLower(entity)
+            logging.info('Wolfram response: {}'.format(next(result.results).text.encode('utf-8')))
             restext = 'Resultaat van WolframAlpha:\n'
-            restext += next(result.results).text + '\n'
+            restext += next(result.results).text.encode('utf-8') + '\n'
             restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
                     urllib.quote(query).replace('%20','+'))
             return restext
