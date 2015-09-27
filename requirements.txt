@@ -4,3 +4,5 @@ argparse==1.2.1
 python-dateutil==2.4.2
 six==1.9.0
 wsgiref==0.1.2
+duckduckgo2==0.242
+wolframalpha==1.2

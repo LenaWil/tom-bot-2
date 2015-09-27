@@ -1,5 +1,6 @@
 from tombotlayer import TomBotLayer
 from yowsup.layers.auth                 import YowAuthenticationProtocolLayer
+from yowsup.layers.protocol_chatstate   import YowChatstateProtocolLayer
 from yowsup.layers.protocol_messages    import YowMessagesProtocolLayer
 from yowsup.layers.protocol_receipts    import YowReceiptProtocolLayer
 from yowsup.layers.protocol_acks        import YowAckProtocolLayer
@@ -8,12 +9,13 @@ from yowsup.layers.network              import YowNetworkLayer
 from yowsup.layers.coder                import YowCoderLayer
 from yowsup.stacks import YowStack
 from yowsup.common import YowConstants
-from yowsup.layers import YowLayerEvent
+from yowsup.layers import YowLayerEvent, YowParallelLayer
 from yowsup.stacks import YowStack, YOWSUP_CORE_LAYERS
 from yowsup.layers.axolotl import YowAxolotlLayer
 from yowsup import env
 import json
 import os
+import logging
 
 def byteify(input):
     """ 
@@ -36,10 +38,11 @@ if CREDENTIALS[0] == 'changeme' or CREDENTIALS[1] == 'changeme':
         CREDENTIALS = (config['username'], config['password'])
 
 if __name__==  "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     layers = (
         TomBotLayer,
-        (YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, 
-            YowIqProtocolLayer, YowReceiptProtocolLayer, YowAckProtocolLayer),
+        YowParallelLayer([YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, 
+            YowIqProtocolLayer, YowReceiptProtocolLayer, YowChatstateProtocolLayer, YowAckProtocolLayer]),
         YowAxolotlLayer,
     ) + YOWSUP_CORE_LAYERS
 

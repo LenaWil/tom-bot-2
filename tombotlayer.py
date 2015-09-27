@@ -6,12 +6,16 @@ import base64
 import time
 import random
 import fortune
-from yowsup.layers.interface                           import YowInterfaceLayer, ProtocolEntityCallback
-from yowsup.layers import YowLayerEvent
-from yowsup.layers.network import YowNetworkLayer
-from yowsup.layers.protocol_messages.protocolentities  import TextMessageProtocolEntity
-from yowsup.layers.protocol_receipts.protocolentities  import OutgoingReceiptProtocolEntity
-from yowsup.layers.protocol_acks.protocolentities      import OutgoingAckProtocolEntity
+import wolframalpha
+import duckduckgo
+import urllib
+from yowsup.layers.interface                            import YowInterfaceLayer, ProtocolEntityCallback
+from yowsup.layers                                      import YowLayerEvent
+from yowsup.layers.network                              import YowNetworkLayer
+from yowsup.layers.protocol_messages.protocolentities   import TextMessageProtocolEntity
+from yowsup.layers.protocol_receipts.protocolentities   import OutgoingReceiptProtocolEntity
+from yowsup.layers.protocol_acks.protocolentities       import OutgoingAckProtocolEntity
+from yowsup.layers.protocol_chatstate.protocolentities  import OutgoingChatstateProtocolEntity, ChatstateProtocolEntity
 
 
 class TomBotLayer(YowInterfaceLayer):
@@ -20,6 +24,13 @@ class TomBotLayer(YowInterfaceLayer):
         self.running = True
         self.fortuneFiles = []
         self.loadFortunes()
+        wolframKey = os.environ.get('WOLFRAM_APPID', 'changeme')
+        if wolframKey != 'changeme':
+            self.wolframClient = wolframalpha.Client(wolframKey)
+            logging.info('WolframAlpha client enabled, API key set.')
+        else:
+            self.wolframClient = False
+            logging.info('WolframAlpha client disabled, no API key given.')
 
     def onAuthSuccess(self, args):
         logging.info('Authentication successful.')
@@ -28,6 +39,21 @@ class TomBotLayer(YowInterfaceLayer):
     def onAuthFailed(self, args):
         logging.critical('Authentication failed.')
         self.running = False
+
+    def onEvent(self, layerEvent):
+        logging.info('Event {}'.format(layerEvent.getName()))
+        if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECT:
+            reason = layerEvent.getArg('reason')
+            logging.warning('Connection lost: {}'.format(reason))
+            if reason == 'Connection Closed':
+                time.sleep(20)
+                logging.warning('Reconnecting')
+                self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+                return True
+            else:
+                self.stop()
+                return False
+        return False
 
     def onDisconnected(self, args):
         logging.error('Connection lost.')
@@ -68,19 +94,39 @@ class TomBotLayer(YowInterfaceLayer):
                     logging.error('Fortune file {} failed to load: {}'.format(filepath, e))
         logging.info('Fortune files loaded.')
 
+    triggers = [
+            'TOMBOT', 'TOMBOT,', 
+            'BOT', 'BOT,', 
+            'VRIEZIRI', 'VRIEZIRI,',
+        ]
     def react(self, message):
-        content = message.getBody()
-        text = content.upper().split()
-        functions = {
+        functions = { # Has to be inside function because of self.
             '!8BALL'    : self.eightball,
             '!FORTUNE'  : self.fortune,
             '!SHUTDOWN' : self.stopmsg,
             '!PING'     : self.ping,
             '!HELP'     : self.help,
+            'HELP'      : self.help,
+            '8BALL'     : self.eightball,
+            'FORTUNE'   : self.fortune,
+            'SHUTDOWN'  : self.stopmsg,
+            'PING'      : self.ping,
+            'CALCULATE' : self.wolfram,
+            'BEREKEN'   : self.wolfram,
             }
+        content = message.getBody()
+        text = content.upper().split()
+        isgroup = False
+        if message.participant: # group message, require trigger
+            isgroup = True
+            if text[0] not in self.triggers: 
+                return # don't respond to normal messages
+            text.remove(text[0])
         try:
             response = functions[text[0]](message)
         except KeyError:
+            if isgroup:
+                return # no "unknown command!" spam
             response = self.unknownCommand(message)
         replyMessage = TextMessageProtocolEntity(
                 response, to = message.getFrom()
@@ -97,7 +143,7 @@ class TomBotLayer(YowInterfaceLayer):
         return "Unknown command!"
 
     def stopmsg(self, message):
-        logging.info('Stop message received from {}, content {}'.format(
+        logging.info('Stop message received from {}, content "{}"'.format(
             message.getFrom(), message.getBody()))
         self.stop()
         return "Shutting down."
@@ -126,6 +172,31 @@ class TomBotLayer(YowInterfaceLayer):
             return fortune.get_random_fortune(file)
         except:
             return "Something went wrong, go bug my author!"
+    
+    def wolfram(self, message):
+        if not self.wolframClient:
+            return 'Geen verbinding met WolframAlpha.'
+        # strip trigger and command
+        content = message.getBody()
+        if message.participant:
+            query = ' '.join(content.split()[2:])
+        else:
+            query = ' '.join(content.split()[1:])
+        logging.debug('Query to WolframAlpha: {}'.format(query))
+        try:
+            entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
+            self.toLower(entity)
+            result = self.wolframClient.query(query)
+            entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
+            self.toLower(entity)
+            restext = 'Resultaat van WolframAlpha:\n'
+            restext += next(result.results).text + '\n'
+            restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
+                    urllib.quote(query).replace('%20','+'))
+            return restext
+        except StopIteration:
+            logging.error('StopIteration op query "{}"'.format(query))
+            return 'Geen resultaat.'
 
 if __name__ == '__main__':
     # Set up logging
