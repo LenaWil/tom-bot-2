@@ -9,6 +9,7 @@ import fortune
 import wolframalpha
 import duckduckgo
 import urllib
+from .helper_functions import extract_query, determine_sender
 from yowsup.layers.interface                            import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers                                      import YowLayerEvent
 from yowsup.layers.network                              import YowNetworkLayer
@@ -19,12 +20,14 @@ from yowsup.layers.protocol_chatstate.protocolentities  import OutgoingChatstate
 
 
 class TomBotLayer(YowInterfaceLayer):
-    def __init__(self):
+    def __init__(self, config):
         super(self.__class__, self).__init__()
         self.running = True
         self.fortuneFiles = []
         self.loadFortunes()
+        self.config = config
         wolframKey = os.environ.get('WOLFRAM_APPID', 'changeme')
+        wolframKey = config['Keys']['WolframAlpha']
         if wolframKey != 'changeme':
             self.wolframClient = wolframalpha.Client(wolframKey)
             logging.info('WolframAlpha client enabled, API key set.')
@@ -111,6 +114,9 @@ class TomBotLayer(YowInterfaceLayer):
             'BEREKEN'   : self.wolfram,
             'DEFINE'    : self.duckduckgo,
             'DDG'       : self.duckduckgo,
+            'ADMINCHECK' : self.isadmin,
+            'SETNICK'   : self.setnick,
+            'GETNICK'   : self.getnick,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -126,6 +132,7 @@ class TomBotLayer(YowInterfaceLayer):
             if isgroup:
                 return # no "unknown command!" spam
             response = self.unknownCommand(message)
+            logging.debug('failed command {}'.format(text[0]))
         if response:
             replyMessage = TextMessageProtocolEntity(
                     response, to = message.getFrom()
@@ -154,6 +161,7 @@ class TomBotLayer(YowInterfaceLayer):
     def stop(self):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
+        self.config.write()
         self.running = False
         sys.exit(0)
 
@@ -176,25 +184,16 @@ class TomBotLayer(YowInterfaceLayer):
         except:
             return "Something went wrong, go bug my author!"
     
-    def extract_query(self, message, cmdlength = 1):
-        """ Remove the command and trigger from the message body, return the stripped text."""
-        content = message.getBody()
-        if message.participant:
-            offset = 1 + cmdlength
-        else:
-            offset = cmdlength
-        return ' '.join(content.split()[offset:])
-
     def duckduckgo(self, message):
         """ Beantwoord vraag met DuckDuckGo's API"""
-        query = self.extract_query(message)
+        query = extract_query(message)
         return duckduckgo.get_zci(query)
 
     def wolfram(self, message):
         """ Beantwoord vraag met WolframAlpha """
         if not self.wolframClient:
             return 'Geen verbinding met WolframAlpha.'
-        query = self.extract_query(message)
+        query = extract_query(message)
         logging.debug('Query to WolframAlpha: {}'.format(query))
         try:
             entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
@@ -211,6 +210,35 @@ class TomBotLayer(YowInterfaceLayer):
         except StopIteration:
             logging.error('StopIteration op query "{}"'.format(query))
             return 'Geen resultaat.'
+        
+    def setnick(self, message):
+        """ Allow setting of nick for name registration """
+        sender = determine_sender(message)
+        command = extract_query(message)
+        csplit = command.split()
+        self.config['Nicks'][csplit[0]] = sender
+        self.config['Nicks'][sender] = csplit[0]
+        return "Gelukt! Hallo, {}".format(csplit[0])
+
+    def getnick(self, message):
+        """ Return the name the sender is currently known as """
+        sender = determine_sender(message)
+        try:
+            nick = self.config['Nicks'][sender]
+            return nick
+        except KeyError:
+            return "Letterlijk wie"
+
+    def isadmin(self, message):
+        """ Check admin status """
+        sender = determine_sender(message)
+        try:
+            if self.config['Admins'][sender]:
+                return True
+        except KeyError:
+            return False
+        return False
+
 
 if __name__ == '__main__':
     # Set up logging
