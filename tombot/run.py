@@ -1,10 +1,10 @@
 import json
-import os
+import os, sys
 import logging
 import argparse
 from configobj import ConfigObj
+from validate import Validator
 from .layer import TomBotLayer
-from .helper_functions import byteify
 # Yowsup
 from yowsup.layers.auth                 import YowAuthenticationProtocolLayer
 from yowsup.layers.protocol_chatstate   import YowChatstateProtocolLayer
@@ -21,24 +21,17 @@ from yowsup.stacks import YowStack, YOWSUP_CORE_LAYERS
 from yowsup.layers.axolotl import YowAxolotlLayer
 from yowsup import env
 
-
-#CREDENTIALS = (os.environ.get('WA_USER', 'changeme'), os.environ.get('WA_PASS', 'changeme'))
-#if CREDENTIALS[0] == 'changeme' or CREDENTIALS[1] == 'changeme':
-    #with open('config.json', 'r') as configfile:
-        #config = byteify(json.loads(configfile.read()))
-        #CREDENTIALS = (config['username'], config['password'])
-
 def main():
     # Arguments
     parser = argparse.ArgumentParser(
-            description='Start Tombot, a chatbot for Whatsapp'
+            description=_('Start Tombot, a chatbot for Whatsapp')
             )
-    parser.add_argument("-v", "--verbose", help="enable debug logging",
-            action="store_true")
-    parser.add_argument("-d", "--dry-run", 
-            help="don't actually start bot, but print config",
-            action="store_true")
-    parser.add_argument("configfile", help="config file location")
+    parser.add_argument('-v', '--verbose', help=_("enable debug logging"),
+            action='store_true')
+    parser.add_argument('-d', '--dry-run', 
+            help=_("don't actually start bot, but print config"),
+            action='store_true')
+    parser.add_argument('configfile', help=_("config file location"), nargs='?')
     args = parser.parse_args()
     # Set up logging
     if args.verbose:
@@ -48,9 +41,17 @@ def main():
     logging.basicConfig(level=loglevel)
     # Read configuration
     specpath = os.path.join(os.path.dirname(__file__), 'configspec.ini')
-    config = ConfigObj(args.configfile)
-    # Build Yowsup stack
+    config = ConfigObj(args.configfile, configspec=specpath)
+    val = Validator()
     if not args.dry_run:
+        config.validate(val)
+        if not args.configfile:
+            error = _("You must specify a config file!")
+            generate_hint = _("Generate one using 'tombot -d > file.ini'.")
+            logging.critical(error)
+            logging.critical(generate_hint)
+            sys.exit(1)
+        # Build Yowsup stack
         CREDENTIALS = (config['Yowsup']['username'], config['Yowsup']['password'])
         layers = (
             TomBotLayer(config),
@@ -71,6 +72,7 @@ def main():
     else:
         # Output config file to stdout
         config.filename = None
+        config.validate(val, copy=True)
         output = config.write()
         for line in output:
             print(line)

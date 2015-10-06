@@ -30,40 +30,25 @@ class TomBotLayer(YowInterfaceLayer):
         wolframKey = config['Keys']['WolframAlpha']
         if wolframKey != 'changeme':
             self.wolframClient = wolframalpha.Client(wolframKey)
-            logging.info('WolframAlpha client enabled, API key set.')
+            logging.info(_("WolframAlpha command enabled."))
         else:
             self.wolframClient = False
-            logging.info('WolframAlpha client disabled, no API key given.')
-
-    def onAuthSuccess(self, args):
-        logging.info('Authentication successful.')
-        self.loadFortunes()
-
-    def onAuthFailed(self, args):
-        logging.critical('Authentication failed.')
-        self.running = False
+            logging.warning(_("WolframAlpha command disabled, no API key set."))
 
     def onEvent(self, layerEvent):
         logging.info('Event {}'.format(layerEvent.getName()))
         if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
             reason = layerEvent.getArg('reason')
-            logging.warning('Connection lost: {}'.format(reason))
+            logging.warning(_("Connection lost: {}").format(reason))
             if reason == 'Connection Closed':
                 time.sleep(20)
-                logging.warning('Reconnecting')
+                logging.warning(_('Reconnecting'))
                 self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
                 return True
             else:
                 self.stop()
                 return False
         return False
-
-    def onDisconnected(self, args):
-        logging.error('Connection lost.')
-        self.running = False
-
-    def onMessageDelivered(self, message):
-        logging.debug('Message {} to {} delivered.'.format(message.getId(), message.getTo()))
 
     @ProtocolEntityCallback('message')
     def onMessageReceived(self, message):
@@ -82,20 +67,20 @@ class TomBotLayer(YowInterfaceLayer):
         self.toLower(ack)
     
     def loadFortunes(self):
-        logging.debug('Loading fortune files.')
+        logging.debug(_('Loading fortune files.'))
         for root, dirs, files in os.walk('fortunes/'):
             for file in files:
                 if not file.endswith('.txt'):
                     continue
-                logging.debug('Loading fortune file {}'.format(file))
+                logging.debug(_('Loading fortune file {}').format(file))
                 try:
                     filepath = os.path.join(root, file)
                     fortune.make_fortune_data_file(filepath)
                     self.fortuneFiles.append(filepath)
-                    logging.debug('Fortune file {} loaded.'.format(filepath))
+                    logging.debug(_('Fortune file {} loaded.').format(filepath))
                 except Exception as e:
-                    logging.error('Fortune file {} failed to load: {}'.format(filepath, e))
-        logging.info('Fortune files loaded.')
+                    logging.error(_('Fortune file {} failed to load: {}').format(filepath, e))
+        logging.info(_('Fortune files loaded.'))
 
     triggers = [
             'TOMBOT', 'TOMBOT,', 
@@ -115,8 +100,8 @@ class TomBotLayer(YowInterfaceLayer):
             'DEFINE'    : self.duckduckgo,
             'DDG'       : self.duckduckgo,
             'ADMINCHECK' : self.isadmin,
-            'SETNICK'   : self.setnick,
-            'GETNICK'   : self.getnick,
+            'SETNICK'   : self.set_nick,
+            'GETNICK'   : self.get_nick,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -147,16 +132,15 @@ class TomBotLayer(YowInterfaceLayer):
         return False
 
     def help(self, message):
-        return "Git gud"
+        return _("I'm helpless!")
 
     def unknownCommand(self, message):
-        return "Unknown command!"
+        return _("Unknown command!")
 
     def stopmsg(self, message):
         logging.info('Stop message received from {}, content "{}"'.format(
             message.getFrom(), message.getBody()))
         self.stop()
-        return "Shutting down."
 
     def stop(self):
         logging.info('Shutting down via stop method.')
@@ -182,17 +166,17 @@ class TomBotLayer(YowInterfaceLayer):
             file = random.choice(self.fortuneFiles)
             return fortune.get_random_fortune(file)
         except:
-            return "Something went wrong, go bug my author!"
+            return _("Something went wrong, go bug my author!")
     
     def duckduckgo(self, message):
-        """ Beantwoord vraag met DuckDuckGo's API"""
+        """ Answer question using DuckDuckGo instant answer"""
         query = extract_query(message)
         return duckduckgo.get_zci(query)
 
     def wolfram(self, message):
-        """ Beantwoord vraag met WolframAlpha """
+        """ Answer question using WolframAlpha API """
         if not self.wolframClient:
-            return 'Geen verbinding met WolframAlpha.'
+            return _('Not connected to WolframAlpha!')
         query = extract_query(message)
         logging.debug('Query to WolframAlpha: {}'.format(query))
         try:
@@ -202,33 +186,47 @@ class TomBotLayer(YowInterfaceLayer):
             entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
             self.toLower(entity)
             logging.info('Wolfram response: {}'.format(next(result.results).text.encode('utf-8')))
-            restext = 'Resultaat van WolframAlpha:\n'
+            restext = _('Result from WolframAlpha:\n')
             restext += next(result.results).text.encode('utf-8') + '\n'
             restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
                     urllib.quote(query).replace('%20','+'))
             return restext
         except StopIteration:
             logging.error('StopIteration op query "{}"'.format(query))
-            return 'Geen resultaat.'
+            return _('No result.')
         
-    def setnick(self, message):
+    # Nicks
+    def set_nick(self, message):
         """ Allow setting of nick for name registration """
         sender = determine_sender(message)
         command = extract_query(message)
+        if self.has_nick(sender):
+            old_nick = self.get_nick_from_string(sender)
+            self.config['Nicks'].pop(old_nick) # Remove old nick
         csplit = command.split()
-        self.config['Nicks'][csplit[0]] = sender
+        self.config['Nicks'][csplit[0]] = sender # Only allow one word for the nick
         self.config['Nicks'][sender] = csplit[0]
-        return "Gelukt! Hallo, {}".format(csplit[0])
+        return _("Success! Hello, {}!").format(csplit[0])
 
-    def getnick(self, message):
-        """ Return the name the sender is currently known as """
+    def get_nick(self, message):
+        """ Return the name the sender of the message is currently known as """
         sender = determine_sender(message)
-        try:
-            nick = self.config['Nicks'][sender]
-            return nick
-        except KeyError:
-            return "Letterlijk wie"
+        nick = self.get_nick_from_string(sender)
+        if not nick:
+            return _("Unknown")
+        return nick
 
+    def get_nick_from_string(self, name):
+        if self.config['Nicks'].has_key(name):
+            nick = self.config['Nicks'][name]
+            return nick
+        else:
+            return None
+
+    def has_nick(self, jid):
+        return self.config['Nicks'].has_key(jid)
+
+    # Helper functions
     def isadmin(self, message):
         """ Check admin status """
         sender = determine_sender(message)
