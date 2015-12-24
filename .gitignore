@@ -1,5 +1,6 @@
 # ignore python, vim autogenerates
 *.pyc
+*.egg-info
 *~
 *.swp
 
@@ -9,3 +10,4 @@ config.json
 # don't commit logs or fortune files
 fortunes/*
 logs/*
+
