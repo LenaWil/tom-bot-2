@@ -185,15 +185,14 @@ class TomBotLayer(YowInterfaceLayer):
             result = self.wolframClient.query(query)
             entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
             self.toLower(entity)
-            logging.info('Wolfram response: {}'.format(next(result.results).text.encode('utf-8')))
             restext = _('Result from WolframAlpha:\n')
-            restext += next(result.results).text.encode('utf-8') + '\n'
+            results = [p.text for p in result.pods if p.title in ('Result', 'Value')]
+            if len(results) == 0:
+                return _('No result.')
+            restext += '\n'.join(results) + '\n'
             restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
                     urllib.quote(query).replace('%20','+'))
             return restext
-        except StopIteration:
-            logging.error('StopIteration op query "{}"'.format(query))
-            return _('No result.')
         
     # Nicks
     def set_nick(self, message):
