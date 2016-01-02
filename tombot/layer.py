@@ -5,6 +5,8 @@ import json
 import base64
 import time
 import random
+import re
+import operator
 import fortune
 import wolframalpha
 import duckduckgo
@@ -28,6 +30,16 @@ class TomBotLayer(YowInterfaceLayer):
         self.config = config
         wolframKey = os.environ.get('WOLFRAM_APPID', 'changeme')
         wolframKey = config['Keys']['WolframAlpha']
+        diceRegex = r'(?P<number>\d+)d(?P<sides>\d+)\s?((?P<operator>\+|-)\s?(?P<modifier>\d+))?'  # yep
+        self.operators = {
+                '+' : operator.add,
+                '-' : operator.sub,
+                '/' : operator.div,
+                '*' : operator.mul,
+                'x' : operator.mul,
+                '%' : operator.mod
+                }
+        self.dicePattern = re.compile(diceRegex, re.IGNORECASE)
         if wolframKey != 'changeme':
             self.wolframClient = wolframalpha.Client(wolframKey)
             logging.info(_("WolframAlpha command enabled."))
@@ -100,6 +112,7 @@ class TomBotLayer(YowInterfaceLayer):
             'BEREKEN'   : self.wolfram,
             'DEFINE'    : self.duckduckgo,
             'DDG'       : self.duckduckgo,
+            'ROLL'      : self.diceroll,
             'ADMINCHECK' : self.isadmin,
             'SETNICK'   : self.set_nick,
             'GETNICK'   : self.get_nick,
@@ -162,7 +175,7 @@ class TomBotLayer(YowInterfaceLayer):
         self.config.write()
         self.running = False
         if restart:
-            sys.exit(1)
+            sys.exit(3)
         sys.exit(0)
 
     eightballResponses = [
@@ -176,6 +189,39 @@ class TomBotLayer(YowInterfaceLayer):
         ]
     def eightball(self, message):
         return random.choice(self.eightballResponses)
+
+    def diceroll(self, message):
+        """ Generate random numbers from 'number'd'sides' [+|- modifier], also give sum"""
+        query = extract_query(message)
+        match = self.dicePattern.search(query)
+        if match == None:
+            return
+
+        number  = int(match.group('number'))
+        sides   = int(match.group('sides'))
+        if sides < 0 or number < 0:
+            return      # Maar hoe dan
+
+        results = []
+        for i in xrange(number):
+            results.append(random.randint(1,sides))
+        result = ""
+        for item in results:
+            result = result + str(item)
+            result = result + ' + '
+        result = result.rstrip(' + ')
+        som = sum(results)
+        if len(result) > 1:
+            result = result + ' = ' + str(som)
+        if match.group(3) != None:
+            modresult = self.operators[match.group('operator')](som, int(match.group('modifier')))
+            try: 
+                result = '{orig}, {som} {operator} {modifier} = {modresult}'.format(
+                        orig=result, som=som, operator=match.group('operator'), 
+                        modifier=match.group('modifier'), modresult=modresult)
+            except Exception as e:
+                logging.error(e)
+        return result
 
     def fortune(self, message):
         try:
@@ -192,8 +238,11 @@ class TomBotLayer(YowInterfaceLayer):
     
     def duckduckgo(self, message):
         """ Answer question using DuckDuckGo instant answer"""
-        query = extract_query(message)
-        return duckduckgo.get_zci(query)
+        try:
+            query = extract_query(message)
+            return duckduckgo.get_zci(query)
+        except ValueError:
+            return "No result."
 
     def wolfram(self, message):
         """ Answer question using WolframAlpha API """
