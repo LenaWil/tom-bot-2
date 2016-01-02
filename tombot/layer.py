@@ -30,14 +30,15 @@ class TomBotLayer(YowInterfaceLayer):
         self.config = config
         wolframKey = os.environ.get('WOLFRAM_APPID', 'changeme')
         wolframKey = config['Keys']['WolframAlpha']
-        diceRegex = r'(?P<number>\d+)d(?P<sides>\d+)\s?((?P<operator>\+|-)\s?(?P<modifier>\d+))?'  # yep
+        diceRegex = r'(?P<number>\d+)d(?P<sides>\d+)\s?((?P<operator>\W)\s?(?P<modifier>\d+))?'  # yep
         self.operators = {
                 '+' : operator.add,
                 '-' : operator.sub,
                 '/' : operator.div,
                 '*' : operator.mul,
                 'x' : operator.mul,
-                '%' : operator.mod
+                '%' : operator.mod,
+                '^' : operator.pow
                 }
         self.dicePattern = re.compile(diceRegex, re.IGNORECASE)
         if wolframKey != 'changeme':
@@ -201,6 +202,8 @@ class TomBotLayer(YowInterfaceLayer):
         sides   = int(match.group('sides'))
         if sides < 0 or number < 0:
             return      # Maar hoe dan
+        if number > 50 and message.participant:
+            return      # Probably spam
 
         results = []
         for i in xrange(number):
@@ -214,13 +217,13 @@ class TomBotLayer(YowInterfaceLayer):
         if len(result) > 1:
             result = result + ' = ' + str(som)
         if match.group(3) != None:
-            modresult = self.operators[match.group('operator')](som, int(match.group('modifier')))
             try: 
+                modresult = self.operators[match.group('operator')](som, int(match.group('modifier')))
                 result = '{orig}, {som} {operator} {modifier} = {modresult}'.format(
                         orig=result, som=som, operator=match.group('operator'), 
                         modifier=match.group('modifier'), modresult=modresult)
-            except Exception as e:
-                logging.error(e)
+            except KeyError:
+                pass    # unrecognized operator, skip modifier
         return result
 
     def fortune(self, message):
