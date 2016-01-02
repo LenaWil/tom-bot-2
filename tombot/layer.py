@@ -94,6 +94,7 @@ class TomBotLayer(YowInterfaceLayer):
             '8BALL'     : self.eightball,
             'FORTUNE'   : self.fortune,
             'SHUTDOWN'  : self.stopmsg,
+            'RESTART'   : self.restartmsg,
             'PING'      : self.ping,
             'CALCULATE' : self.wolfram,
             'BEREKEN'   : self.wolfram,
@@ -139,6 +140,14 @@ class TomBotLayer(YowInterfaceLayer):
     def unknownCommand(self, message):
         return _("Unknown command!")
 
+    def restartmsg(self, message):
+        logging.info('Restart message received from {}, content "{}"'.format(
+            message.getFrom(), message.getBody()))
+        if not self.isadmin(message):
+            logging.warning('Unauthorized shutdown attempt from {}'.format(determine_sender(message)))
+            return self.userwarn()
+        self.stop(True)
+
     def stopmsg(self, message):
         logging.info('Stop message received from {}, content "{}"'.format(
             message.getFrom(), message.getBody()))
@@ -147,11 +156,13 @@ class TomBotLayer(YowInterfaceLayer):
             return self.userwarn()
         self.stop()
 
-    def stop(self):
+    def stop(self, restart=False):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
         self.running = False
+        if restart:
+            sys.exit(1)
         sys.exit(0)
 
     eightballResponses = [
