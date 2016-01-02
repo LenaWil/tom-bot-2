@@ -75,7 +75,7 @@ class TomBotLayer(YowInterfaceLayer):
                 logging.debug(_('Loading fortune file {}').format(file))
                 try:
                     filepath = os.path.join(root, file)
-                    fortune.make_fortune_data_file(filepath)
+                    fortune.make_fortune_data_file(filepath, True)
                     self.fortuneFiles.append(filepath)
                     logging.debug(_('Fortune file {} loaded.').format(filepath))
                 except Exception as e:
@@ -113,6 +113,8 @@ class TomBotLayer(YowInterfaceLayer):
             text.remove(text[0])
         try:
             response = functions[text[0]](message)
+        except IndexError:
+            return
         except KeyError:
             if isgroup:
                 return # no "unknown command!" spam
@@ -140,6 +142,9 @@ class TomBotLayer(YowInterfaceLayer):
     def stopmsg(self, message):
         logging.info('Stop message received from {}, content "{}"'.format(
             message.getFrom(), message.getBody()))
+        if not self.isadmin(message):
+            logging.warning('Unauthorized shutdown attempt from {}'.format(determine_sender(message)))
+            return self.userwarn()
         self.stop()
 
     def stop(self):
@@ -166,7 +171,13 @@ class TomBotLayer(YowInterfaceLayer):
             file = random.choice(self.fortuneFiles)
             return fortune.get_random_fortune(file)
         except:
-            return _("Something went wrong, go bug my author!")
+            return _("Be the quote you want to see on a wall. \n Error message 20XX")
+
+    def userwarn(self):
+        try:
+            return fortune.get_random_fortune('fortunes/shitcurity.txt')
+        except:
+            return "Don't do that"
     
     def duckduckgo(self, message):
         """ Answer question using DuckDuckGo instant answer"""
@@ -179,20 +190,19 @@ class TomBotLayer(YowInterfaceLayer):
             return _('Not connected to WolframAlpha!')
         query = extract_query(message)
         logging.debug('Query to WolframAlpha: {}'.format(query))
-        try:
-            entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
-            self.toLower(entity)
-            result = self.wolframClient.query(query)
-            entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
-            self.toLower(entity)
-            restext = _('Result from WolframAlpha:\n')
-            results = [p.text for p in result.pods if p.title in ('Result', 'Value')]
-            if len(results) == 0:
-                return _('No result.')
-            restext += '\n'.join(results) + '\n'
-            restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
-                    urllib.quote(query).replace('%20','+'))
-            return restext
+        entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
+        self.toLower(entity)
+        result = self.wolframClient.query(query)
+        entity = OutgoingChatstateProtocolEntity(ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
+        self.toLower(entity)
+        restext = _('Result from WolframAlpha:\n')
+        results = [p.text for p in result.pods if p.title in ('Result', 'Value', 'Decimal approximation', 'Exact result')]
+        if len(results) == 0:
+            return _('No result.')
+        restext += '\n'.join(results) + '\n'
+        restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
+                urllib.quote(query).replace('%20','+'))
+        return restext
         
     # Nicks
     def set_nick(self, message):
@@ -224,6 +234,11 @@ class TomBotLayer(YowInterfaceLayer):
 
     def has_nick(self, jid):
         return self.config['Nicks'].has_key(jid)
+
+    def admincheck(self, message):
+        if self.isadmin(message):
+            return 'Yeh'
+        return 'Neh'
 
     # Helper functions
     def isadmin(self, message):
