@@ -8,3 +8,4 @@ duckduckgo2==0.242
 wolframalpha==1.2
 pushbullet-cli==0.7.1
 pylint==1.5.3
+configobj==5.0.6
