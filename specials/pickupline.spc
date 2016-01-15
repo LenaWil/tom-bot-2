@@ -40,6 +40,6 @@ Ben je dopamine? Want je maakt me blij.
 %
 Are you a fossil? Because I'm a paleontologist and I want to date you badly.
 %
-You're pretyy, I'm pretty, want to go back to my place and stare at each other for a while?
+You're pretty, I'm pretty, want to go back to my place and stare at each other for a while?
 %
 I have a netflix account.
