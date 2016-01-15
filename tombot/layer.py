@@ -541,18 +541,6 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=unused-argument
         pass
 
-    # Nicks
-    def has_nick(self, jid):
-        ''' Deprecated: return whether a oldstyle nick is known in the config file. '''
-        return self.config['Nicks'].has_key(jid)
-
-    def admincheck(self, message):
-        ''' Deprecated: message handler that can confirm a user's admin status. '''
-        # Doen: vervangen met adminstatus uit database
-        if self.isadmin(message):
-            return 'Yeh'
-        return 'Neh'
-
     # Loglevel changes
     def logdebug(self, message=None):
         ''' Temporarily set the loglevel to debug. '''
