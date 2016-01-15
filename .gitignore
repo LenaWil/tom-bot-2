@@ -4,10 +4,11 @@
 *~
 *.swp
 
-# ignore the actual config file
-config.json
+# ignore the database and config files
+*.db
+*.config
 
 # don't commit logs or fortune files
 fortunes/*
 logs/*
-
+*.dat
