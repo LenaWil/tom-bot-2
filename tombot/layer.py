@@ -200,6 +200,7 @@ class TomBotLayer(YowInterfaceLayer):
         'BOT', 'BOT,',
         'VRIEZIRI', 'VRIEZIRI,',
         'VICTOR', 'VICTOR,',
+        'VIKTOR', 'VIKTOR,',
         'MINION', 'MINION,',
         ]
 
