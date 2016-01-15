@@ -351,7 +351,6 @@ class TomBotLayer(YowInterfaceLayer):
         ''' Sends (bad) genderless pickupline to sender. '''
         return fortune.get_random_fortune(self.specials['pickupline.spc']).decode('utf-8')
 
-
     # NewNicks
     def collect_users(self, message=None):
         ''' Detect all users and add them to the 'users' table, if not present. Disabled. '''
