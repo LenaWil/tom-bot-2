@@ -199,6 +199,9 @@ class TomBotLayer(YowInterfaceLayer):
         'TOMBOT', 'TOMBOT,',
         'BOT', 'BOT,',
         'VRIEZIRI', 'VRIEZIRI,',
+        'VICTOR', 'VICTOR,',
+        'VIKTOR', 'VIKTOR,',
+        'MINION', 'MINION,',
         ]
 
     def react(self, message):
@@ -220,6 +223,10 @@ class TomBotLayer(YowInterfaceLayer):
             'COOKIE'    : self.cookie,
             self.koekje      : self.cookie,
             'KOEKJE'    : self.cookie,
+            'LARS'      : self.lars,
+            'LOVEYOU'   : self.lars,
+            'DATE'      : self.lars,
+            'PICKUP'    : self.lars,
             'DBSETUP'   : self.collect_users,
             'LOGINFO'   : self.loginfo,
             'LOGDEBUG'  : self.logdebug,
@@ -340,6 +347,10 @@ class TomBotLayer(YowInterfaceLayer):
         restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
             urllib.quote(query).replace('%20', '+'))
         return restext
+
+    def lars(self,message):
+        ''' Sends (bad) genderless pickupline to sender. '''
+        return fortune.get_random_fortune(self.specials['pickupline.spc']).decode('utf-8')
 
     # NewNicks
     def collect_users(self, message=None):
