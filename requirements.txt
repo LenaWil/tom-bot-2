@@ -6,3 +6,5 @@ six==1.9.0
 wsgiref==0.1.2
 duckduckgo2==0.242
 wolframalpha==1.2
+pushbullet-cli==0.7.1
+pylint==1.5.3
