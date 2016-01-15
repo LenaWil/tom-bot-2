@@ -5,14 +5,13 @@ import logging
 import time
 import random
 import re
-import operator
 import urllib
 import sqlite3
 import datetime
 import fortune
 import wolframalpha
 from .helper_functions import extract_query, determine_sender, ddg_respond
-from .helper_functions import forcelog, ping, unknown_command
+from .helper_functions import forcelog, ping, unknown_command, diceroll
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -31,10 +30,9 @@ from yowsup.layers.protocol_chatstate.protocolentities \
 
 class TomBotLayer(YowInterfaceLayer):
     ''' The tombot layer, a chatbot for WhatsApp. '''
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, config):
         super(self.__class__, self).__init__()
-        self.running = True
-        self.havegroups = False
         self.config = config
         logging.info('Current working directory: %s', os.getcwd())
         try:
@@ -48,21 +46,7 @@ class TomBotLayer(YowInterfaceLayer):
         # Fortune and specials-setup:
         self.fortune_files = []
         self.specials = {}
-        self.load_fortunes()
-
-        # Dice setup:
-        dice_regex = \
-            r'(?P<number>\d+)d(?P<sides>\d+)\s?((?P<operator>\W)\s?(?P<modifier>\d+))?'
-        self.operators = {
-            '+': operator.add,
-            '-': operator.sub,
-            '/': operator.div,
-            '*': operator.mul,
-            'x': operator.mul,
-            '%': operator.mod,
-            '^': operator.pow
-            }
-        self.dice_pattern = re.compile(dice_regex, re.IGNORECASE)
+        self._load_fortunes()
 
         # Wolfram Answer API setup
         wolfram_key = config['Keys']['WolframAlpha']
@@ -176,7 +160,7 @@ class TomBotLayer(YowInterfaceLayer):
             entity.getId(), 'receipt', entity.getType(), entity.getFrom())
         self.toLower(ack)
 
-    def load_fortunes(self):
+    def _load_fortunes(self):
         ''' Loads fortune and specials files from their directories. '''
         # pylint: disable=unused-variable
         logging.debug(_('Loading specials files.'))
@@ -231,7 +215,7 @@ class TomBotLayer(YowInterfaceLayer):
             'BEREKEN'   : self.wolfram,
             'DEFINE'    : ddg_respond,
             'DDG'       : ddg_respond,
-            'ROLL'      : self.diceroll,
+            'ROLL'      : diceroll,
             'ADMINCHECK': self.isadmin,
             'COOKIE'    : self.cookie,
             self.koekje      : self.cookie,
@@ -308,7 +292,6 @@ class TomBotLayer(YowInterfaceLayer):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
-        self.running = False
         if restart:
             sys.exit(3)
         sys.exit(0)
@@ -318,42 +301,6 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=unused-argument
         return fortune.get_random_fortune(self.specials['eightball.spc'])
 
-    def diceroll(self, message):
-        '''Roll dice according to a xdy pattern.'''
-        query = extract_query(message)
-        match = self.dice_pattern.search(query)
-        if match is None:
-            return
-
-        number = int(match.group('number'))
-        sides = int(match.group('sides'))
-        if sides < 0 or number < 0:
-            return      # Maar hoe dan
-        if number > 50 and message.participant:
-            return      # Probably spam
-
-        results = []
-        for _ in xrange(number):
-            results.append(random.randint(1, sides))
-        result = ''
-        for item in results:
-            result = result + str(item)
-            result = result + ' + '
-        result = result.rstrip(' + ')
-        som = sum(results)
-        if len(results) > 1:
-            result = result + ' = ' + str(som)
-        if match.group(3) != None:
-            try:
-                modresult = self.operators[match.group('operator')](
-                    som, int(match.group('modifier')))
-                result = '{orig}, {som} {operator} {modifier} = {modresult}'.format(
-                    orig=result, som=som, operator=match.group('operator'),
-                    modifier=match.group('modifier'), modresult=modresult)
-            except KeyError:
-                pass  # unrecognized operator, skip modifier
-        return result
-
     def fortune(self, message):
         ''' Choose a random quote from a random fortune file. '''
         # pylint: disable=unused-argument
@@ -361,7 +308,7 @@ class TomBotLayer(YowInterfaceLayer):
         try:
             file_ = random.choice(self.fortune_files)
             return fortune.get_random_fortune(file_)
-        except:
+        except ValueError:
             return _('Be the quote you want to see on a wall. \n Error message 20XX')
 
     def userwarn(self):
@@ -399,7 +346,7 @@ class TomBotLayer(YowInterfaceLayer):
         ''' Detect all users and add them to the 'users' table, if not present. Disabled. '''
         # pylint: disable=unused-argument
         logging.info('Beginning user detection.')
-        if not self.havegroups:
+        if not self.known_groups:
             logging.warning('Groups have not been detected, aborting.')
             return
         for group in self.known_groups:
@@ -475,7 +422,7 @@ class TomBotLayer(YowInterfaceLayer):
                                 (timeout, determine_sender(message)))
             self.conn.commit()
             return 'Ok'
-        except:
+        except ValueError:
             logging.error('Timeout set failure: %s', cmd)
             return 'IT BROKE'
 
@@ -492,7 +439,7 @@ class TomBotLayer(YowInterfaceLayer):
                                 (timeout, id_))
             self.conn.commit()
             return 'Timeout for user updated to {}'.format(id_)
-        except:
+        except ValueError:
             return 'IT BROKE'
 
     def list_own_nicks(self, message):
