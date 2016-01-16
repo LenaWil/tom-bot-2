@@ -210,11 +210,13 @@ class TomBotLayer(YowInterfaceLayer):
             'HELP'      : self.help,
             'FORCELOG'  : forcelog,
             '8BALL'     : self.eightball,
+            'IS'        : self.eightball,
             'FORTUNE'   : self.fortune,
             'SHUTDOWN'  : self.stopmsg,
             'RESTART'   : self.restartmsg,
             'PING'      : ping,
             'CALCULATE' : self.wolfram,
+            'CALC'      : self.wolfram,
             'BEREKEN'   : self.wolfram,
             'DEFINE'    : ddg_respond,
             'DDG'       : ddg_respond,
@@ -348,8 +350,9 @@ class TomBotLayer(YowInterfaceLayer):
             urllib.quote(query).replace('%20', '+'))
         return restext
 
-    def lars(self,message):
+    def lars(self, message):
         ''' Sends (bad) genderless pickupline to sender. '''
+        # pylint: disable=unused-argument
         return fortune.get_random_fortune(self.specials['pickupline.spc']).decode('utf-8')
 
     # NewNicks
