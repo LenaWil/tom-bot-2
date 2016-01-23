@@ -43,3 +43,5 @@ Are you a fossil? Because I'm a paleontologist and I want to date you badly.
 You're pretty, I'm pretty, want to go back to my place and stare at each other for a while?
 %
 I have a netflix account.
+%
+On a scale from 1 to 10, you're a 9 and I'm the 1 you need.
