@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 
 def doekoe():
     ''' Doekoe: zie wanneer je weer geld krijgt '''
-    # pylint: disable=too-many-branches
     res = ""
     today = date.today()
     next_month = today + relativedelta(months=1)
@@ -24,14 +23,10 @@ def doekoe():
             delta.days, 'dag' if delta.days < 2 else 'dagen', loondag.isoformat())
 
     # Zorgtoeslag: eerste werkdag na de 20e
-    ztdag = date(today.year, today.month, 20)
-    if ztdag.weekday() > 4:
-        ztdag = date(today.year, today.month, 20 + 7 - ztdag.weekday())
+    ztdag = first_weekday_after(date(today.year, today.month, 20))
 
     if today > ztdag:
-        ztdag = date(next_month.year, next_month.month, 20)
-        if ztdag.weekday() > 4:
-            ztdag = date(next_month.year, next_month.month, 20 + 7 - ztdag.weekday())
+        ztdag = first_weekday_after(date(next_month.year, next_month.month, 20))
 
     if today == ztdag:
         res += 'Zorgtoeslag is vandaag! ({})\n'.format(ztdag.isoformat())
@@ -40,18 +35,14 @@ def doekoe():
         res += 'Zorgtoeslag komt over {} {}. ({})\n'.format(
             delta.days, 'dag' if delta.days < 2 else 'dagen', ztdag.isoformat())
 
-    # Stufi: eerste werkdag voor de 24e
-    stufidag = date(today.year, today.month, 24)
-    if stufidag.weekday() > 4:
-        stufidag = date(today.year, today.month, 24 + (4 - stufidag.weekday()))
+    # Stufi: laatste werkdag voor de 24e
+    stufidag = last_weekday_before(date(today.year, today.month, 24))
 
     if today > stufidag:  # volgende maand berekenen
-        stufidag = date(next_month.year, next_month.month, 24)
-        if stufidag.weekday() > 4:
-            stufidag = date(today.year, today.month, 24 + (4 - stufidag.weekday()))
+        stufidag = last_weekday_before(date(next_month.year, next_month.month, 24))
 
     if today == stufidag:
-        res += 'Stufi is vandaag! ({})\n'.format(stufidag.isoformat())
+        res += 'Stufi komt vandaag! ({})\n'.format(stufidag.isoformat())
     else:
         delta = relativedelta(stufidag, today)
         res += 'Stufi komt over {} {}. ({})\n'.format(
@@ -59,6 +50,18 @@ def doekoe():
 
     res += '\nAan deze informatie kunnen geen rechten worden ontleend.'
     return res
+
+def first_weekday_after(arg):
+    ''' Finds the first weekday on or after the given date. '''
+    if arg.weekday() < 5:
+        return arg
+    return arg + relativedelta(days=7 - arg.weekday())
+
+def last_weekday_before(arg):
+    ''' Returns the first weekday on or before the given date. '''
+    if arg.weekday() < 5:
+        return arg
+    return arg + relativedelta(days=4 - arg.weekday())
 
 if __name__ == '__main__':
     print(doekoe())
