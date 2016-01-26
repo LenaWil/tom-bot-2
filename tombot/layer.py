@@ -12,6 +12,7 @@ import fortune
 import wolframalpha
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
+from .doekoe import doekoe
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -240,6 +241,13 @@ class TomBotLayer(YowInterfaceLayer):
             'ADDNICK'   : self.add_own_nick,
             'RMNICK'    : self.remove_own_nick,
             'USER'      : self.list_other_nicks,
+            'DOEKOE'    : lambda x, y: doekoe(),
+            'DUKU'      : lambda x, y: doekoe(),
+            'GELD'      : lambda x, y: doekoe(),
+            'GHELDT'    : lambda x, y: doekoe(),
+            'CASH'      : lambda x, y: doekoe(),
+            'MUNNIE'    : lambda x, y: doekoe(),
+            'MONEYS'    : lambda x, y: doekoe(),
             }
         content = message.getBody()
         text = content.upper().split()
