@@ -241,13 +241,13 @@ class TomBotLayer(YowInterfaceLayer):
             'ADDNICK'   : self.add_own_nick,
             'RMNICK'    : self.remove_own_nick,
             'USER'      : self.list_other_nicks,
-            'DOEKOE'    : lambda x, y: doekoe(),
-            'DUKU'      : lambda x, y: doekoe(),
-            'GELD'      : lambda x, y: doekoe(),
-            'GHELDT'    : lambda x, y: doekoe(),
-            'CASH'      : lambda x, y: doekoe(),
-            'MUNNIE'    : lambda x, y: doekoe(),
-            'MONEYS'    : lambda x, y: doekoe(),
+            'DOEKOE'    : lambda x: doekoe(),
+            'DUKU'      : lambda x: doekoe(),
+            'GELD'      : lambda x: doekoe(),
+            'GHELDT'    : lambda x: doekoe(),
+            'CASH'      : lambda x: doekoe(),
+            'MUNNIE'    : lambda x: doekoe(),
+            'MONEYS'    : lambda x: doekoe(),
             }
         content = message.getBody()
         text = content.upper().split()
