@@ -64,6 +64,7 @@ def main():
             'default' : SQLAlchemyJobStore(url='sqlite:///jobs.sqlite'),
         }
         scheduler = BackgroundScheduler(jobstores=jobstores)
+
         # Build Yowsup stack
         credentials = (config['Yowsup']['username'], config['Yowsup']['password'])
         layers = (

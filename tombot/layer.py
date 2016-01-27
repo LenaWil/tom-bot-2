@@ -13,6 +13,7 @@ import fortune
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
 from .doekoe import doekoe
+import tombot.rpc as rpc
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -68,6 +69,8 @@ class TomBotLayer(YowInterfaceLayer):
         self.known_groups = []
 
         # Start the passed scheduler
+        self.scheduler.add_job(
+            rpc.scheduler_ping, 'interval', seconds=5, count=3, id='pingtest')
         self.scheduler.start()
 
     @ProtocolEntityCallback('iq')
@@ -313,6 +316,8 @@ class TomBotLayer(YowInterfaceLayer):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
+        self.scheduler.remove_job(id='pingtest')
+        self.scheduler.shutdown()
         if restart:
             sys.exit(3)
         sys.exit(0)
