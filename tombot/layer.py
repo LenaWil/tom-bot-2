@@ -590,7 +590,7 @@ class TomBotLayer(YowInterfaceLayer):
         body = extract_query(message)
         self.scheduler.add_job(
             rpc.remote_send, 'date',
-            [determine_sender(message), body],
+            [body, determine_sender(message)],
             run_date=dateutil.parser.parse(body, fuzzy=True))
         return 'Ok'
 
