@@ -316,7 +316,7 @@ class TomBotLayer(YowInterfaceLayer):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
-        self.scheduler.remove_job(id='pingtest')
+        self.scheduler.remove_job(job_id='pingtest')
         self.scheduler.shutdown()
         if restart:
             sys.exit(3)
