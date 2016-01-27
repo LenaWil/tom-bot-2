@@ -8,8 +8,8 @@ import re
 import urllib
 import sqlite3
 import datetime
-import fortune
 import wolframalpha
+import fortune
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
 from .doekoe import doekoe
@@ -32,9 +32,10 @@ from yowsup.layers.protocol_chatstate.protocolentities \
 class TomBotLayer(YowInterfaceLayer):
     ''' The tombot layer, a chatbot for WhatsApp. '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, config):
+    def __init__(self, config, scheduler):
         super(self.__class__, self).__init__()
         self.config = config
+        self.scheduler = scheduler
         logging.info('Current working directory: %s', os.getcwd())
         try:
             logging.info('Database location: %s',
@@ -65,6 +66,9 @@ class TomBotLayer(YowInterfaceLayer):
 
         # Group list holder
         self.known_groups = []
+
+        # Start the passed scheduler
+        self.scheduler.start()
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
