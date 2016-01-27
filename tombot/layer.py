@@ -10,6 +10,7 @@ import sqlite3
 import datetime
 import threading
 import wolframalpha
+import dateutil.parser
 import fortune
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
@@ -263,6 +264,8 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'REMINDME'  : self.addreminder,
+            'REMIND'    : self.addreminder,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -580,6 +583,16 @@ class TomBotLayer(YowInterfaceLayer):
         ''' TODO: Remove a nickname from any user. '''
         # pylint: disable=unused-argument
         pass
+
+    # Remindme and scheduling
+    def addreminder(self, message):
+        ''' (Hopefully) sends user a message at the given time '''
+        body = extract_query(message)
+        self.scheduler.add_job(
+            rpc.remote_send, 'date',
+            [determine_sender(message), body],
+            run_date=dateutil.parser.parse(body, fuzzy=True))
+        return 'Ok'
 
     # Loglevel changes
     def logdebug(self, message=None):
