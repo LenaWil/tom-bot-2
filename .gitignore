@@ -7,6 +7,7 @@
 # ignore the database and config files
 *.db
 *.config
+jobs.sqlite
 
 # don't commit logs or fortune files
 fortunes/*
