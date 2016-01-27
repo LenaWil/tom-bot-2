@@ -8,6 +8,7 @@ import re
 import urllib
 import sqlite3
 import datetime
+import threading
 import wolframalpha
 import fortune
 from .helper_functions import extract_query, determine_sender, ddg_respond
@@ -67,6 +68,15 @@ class TomBotLayer(YowInterfaceLayer):
 
         # Group list holder
         self.known_groups = []
+
+        # Start rpc listener
+        host = 'localhost'
+        port = 10666
+        self.rpcserver = rpc.ThreadedTCPServer((host, port), rpc.ThreadedTCPRequestHandler)
+
+        server_thread = threading.Thread(target=self.rpcserver.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
 
         # Start the passed scheduler
         self.scheduler.add_job(
@@ -318,6 +328,8 @@ class TomBotLayer(YowInterfaceLayer):
         self.config.write()
         self.scheduler.remove_job(job_id='pingtest')
         self.scheduler.shutdown()
+        self.rpcserver.shutdown()
+        self.rpcserver.server_close()
         if restart:
             sys.exit(3)
         sys.exit(0)
