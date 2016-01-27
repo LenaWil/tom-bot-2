@@ -3,6 +3,8 @@ import socket
 import threading
 import SocketServer
 import logging
+from yowsup.layers.protocol_messages.protocolentities \
+        import TextMessageProtocolEntity
 
 
 def scheduler_ping():
@@ -17,7 +19,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if args[0].upper() == 'LOG':
             logging.info(args)
         elif args[0].upper() == 'SEND':
-            logging.info('Sending %s to %s', args[1], args[2])
+            logging.info('Sending %s to %s', args[2], args[1])
+            msg = TextMessageProtocolEntity(
+                args[2], to=args[1])
+            self.server.bot.toLower(msg)
         logging.info(data)
         response = "Ok."
         self.request.sendall(response)
