@@ -1,6 +1,5 @@
 ''' Contains functions that poke the bot to do something on its own '''
 import socket
-import threading
 import SocketServer
 import logging
 from yowsup.layers.protocol_messages.protocolentities \
@@ -33,3 +32,12 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
         self.bot = bot
         SocketServer.TCPServer.__init__(
             self, server_address, RequestHandlerClass, bind_and_activate)
+
+def remote_send(body, recipient):
+    ''' Send a single message via the local reacharound. '''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect('localhost', 10999)
+    sock.sendall('SEND\x1c{}\x1c{}'.format(recipient, body))
+    resp = sock.recv(1024)
+    if resp != 'Ok.':
+        raise ValueError('Iets ging verkeerd!')

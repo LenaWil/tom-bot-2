@@ -79,8 +79,6 @@ class TomBotLayer(YowInterfaceLayer):
         server_thread.start()
 
         # Start the passed scheduler
-        self.scheduler.add_job(
-            rpc.scheduler_ping, 'interval', seconds=5, id='pingtest')
         self.scheduler.start()
 
     @ProtocolEntityCallback('iq')
@@ -326,7 +324,6 @@ class TomBotLayer(YowInterfaceLayer):
         logging.info('Shutting down via stop method.')
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
-        self.scheduler.remove_job(job_id='pingtest')
         self.scheduler.shutdown()
         self.rpcserver.shutdown()
         self.rpcserver.server_close()
