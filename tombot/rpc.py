@@ -36,7 +36,7 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 def remote_send(body, recipient):
     ''' Send a single message via the local reacharound. '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect('localhost', 10999)
+    sock.connect(('localhost', 10999))
     sock.sendall('SEND\x1c{}\x1c{}'.format(recipient, body))
     resp = sock.recv(1024)
     if resp != 'Ok.':
