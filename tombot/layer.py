@@ -72,7 +72,7 @@ class TomBotLayer(YowInterfaceLayer):
         # Start rpc listener
         host = 'localhost'
         port = 10666
-        self.rpcserver = rpc.ThreadedTCPServer((host, port), rpc.ThreadedTCPRequestHandler)
+        self.rpcserver = rpc.ThreadedTCPServer((host, port), rpc.ThreadedTCPRequestHandler, self)
 
         server_thread = threading.Thread(target=self.rpcserver.serve_forever)
         server_thread.daemon = True
