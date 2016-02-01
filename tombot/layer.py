@@ -142,7 +142,7 @@ class TomBotLayer(YowInterfaceLayer):
                 # Check timeout
                 currenttime = (datetime.datetime.now() - datetime.datetime(
                     1970, 1, 1)).total_seconds()
-                if currenttime < (result[2] + result[1]):
+                if currenttime < (result[2] + result[1]) and message.participant:
                     return
 
                 # Send mention notification: [author]: [body]
@@ -262,7 +262,7 @@ class TomBotLayer(YowInterfaceLayer):
         except IndexError:
             return
         except KeyError:
-            if isgroup:
+            if isgroup or content.startswith('@'):
                 return # no 'unknown command!' spam
             response = unknown_command(message)
             logging.debug('Failed command %s', text[0])
