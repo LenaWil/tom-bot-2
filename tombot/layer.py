@@ -262,7 +262,7 @@ class TomBotLayer(YowInterfaceLayer):
         except IndexError:
             return
         except KeyError:
-            if isgroup:
+            if isgroup or content.startswith('@'):
                 return # no 'unknown command!' spam
             response = unknown_command(message)
             logging.debug('Failed command %s', text[0])
