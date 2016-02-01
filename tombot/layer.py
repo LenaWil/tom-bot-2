@@ -142,7 +142,7 @@ class TomBotLayer(YowInterfaceLayer):
                 # Check timeout
                 currenttime = (datetime.datetime.now() - datetime.datetime(
                     1970, 1, 1)).total_seconds()
-                if currenttime < (result[2] + result[1]):
+                if currenttime < (result[2] + result[1]) and message.participant:
                     return
 
                 # Send mention notification: [author]: [body]
