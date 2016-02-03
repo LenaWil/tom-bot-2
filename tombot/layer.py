@@ -254,6 +254,8 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'PON'       : self.set_online,
+            'POFF'      : self.set_offline,
             }
         content = message.getBody()
         text = content.upper().split()
