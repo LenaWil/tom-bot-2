@@ -8,8 +8,9 @@ import re
 import urllib
 import sqlite3
 import datetime
-import fortune
 import wolframalpha
+import fortune
+
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
 from .doekoe import doekoe
@@ -27,6 +28,8 @@ from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_chatstate.protocolentities \
         import OutgoingChatstateProtocolEntity, ChatstateProtocolEntity
+from yowsup.layers.protocol_presence.protocolentities \
+        import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
 
 
 class TomBotLayer(YowInterfaceLayer):
@@ -248,6 +251,8 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'PON'       : self.presenceon,
+            'POFF'      : self.presenceoff,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -587,6 +592,16 @@ class TomBotLayer(YowInterfaceLayer):
         except KeyError:
             return False
         return False
+
+    def presenceon(self, _):
+        ''' Set presence as available, testing version '''
+        entity = AvailablePresenceProtocolEntity()
+        self.toLower(entity)
+
+    def presenceoff(self, _):
+        ''' Set presence as unavailable, testing version '''
+        entity = UnavailablePresenceProtocolEntity()
+        self.toLower(entity)
 
 if __name__ == '__main__':
     sys.exit("This script should be run via run.py and/or the tombot-run command.")
