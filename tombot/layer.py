@@ -69,8 +69,6 @@ class TomBotLayer(YowInterfaceLayer):
         # Group list holder
         self.known_groups = []
 
-        # Set presence online
-        self.set_online()
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -96,6 +94,9 @@ class TomBotLayer(YowInterfaceLayer):
             else:
                 self.stop()
                 return False
+        elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
+            logging.info('Connection established.')
+            self.set_online()
         return False
 
     @ProtocolEntityCallback('message')
