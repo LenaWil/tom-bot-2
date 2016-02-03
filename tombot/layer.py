@@ -8,8 +8,9 @@ import re
 import urllib
 import sqlite3
 import datetime
-import fortune
 import wolframalpha
+import fortune
+
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
 from .doekoe import doekoe
@@ -27,6 +28,8 @@ from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_chatstate.protocolentities \
         import OutgoingChatstateProtocolEntity, ChatstateProtocolEntity
+from yowsup.layers.protocol_presence.protocolentities \
+        import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
 
 
 class TomBotLayer(YowInterfaceLayer):
@@ -66,6 +69,7 @@ class TomBotLayer(YowInterfaceLayer):
         # Group list holder
         self.known_groups = []
 
+
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
         ''' Handles incoming IQ messages, currently inactive. '''
@@ -90,6 +94,9 @@ class TomBotLayer(YowInterfaceLayer):
             else:
                 self.stop()
                 return False
+        elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
+            logging.info('Connection established.')
+            self.set_online()
         return False
 
     @ProtocolEntityCallback('message')
@@ -307,6 +314,7 @@ class TomBotLayer(YowInterfaceLayer):
     def stop(self, restart=False):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
+        self.set_offline()
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
         if restart:
@@ -587,6 +595,18 @@ class TomBotLayer(YowInterfaceLayer):
         except KeyError:
             return False
         return False
+
+    def set_online(self, *_):
+        ''' Set presence as available '''
+        logging.debug('Setting presence online.')
+        entity = AvailablePresenceProtocolEntity()
+        self.toLower(entity)
+
+    def set_offline(self, *_):
+        ''' Set presence as unavailable '''
+        logging.debug('Setting presence offline.')
+        entity = UnavailablePresenceProtocolEntity()
+        self.toLower(entity)
 
 if __name__ == '__main__':
     sys.exit("This script should be run via run.py and/or the tombot-run command.")
