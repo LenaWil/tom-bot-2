@@ -600,11 +600,13 @@ class TomBotLayer(YowInterfaceLayer):
 
     def set_online(self, *_):
         ''' Set presence as available '''
+        logging.info('Setting presence online.')
         entity = AvailablePresenceProtocolEntity()
         self.toLower(entity)
 
     def set_offline(self, *_):
         ''' Set presence as unavailable '''
+        logging.info('Setting presence offline.')
         entity = UnavailablePresenceProtocolEntity()
         self.toLower(entity)
 
