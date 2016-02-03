@@ -255,8 +255,6 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
-            'PON'       : self.set_online,
-            'POFF'      : self.set_offline,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -600,13 +598,13 @@ class TomBotLayer(YowInterfaceLayer):
 
     def set_online(self, *_):
         ''' Set presence as available '''
-        logging.info('Setting presence online.')
+        logging.debug('Setting presence online.')
         entity = AvailablePresenceProtocolEntity()
         self.toLower(entity)
 
     def set_offline(self, *_):
         ''' Set presence as unavailable '''
-        logging.info('Setting presence offline.')
+        logging.debug('Setting presence offline.')
         entity = UnavailablePresenceProtocolEntity()
         self.toLower(entity)
 
