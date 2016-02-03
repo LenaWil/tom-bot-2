@@ -69,6 +69,9 @@ class TomBotLayer(YowInterfaceLayer):
         # Group list holder
         self.known_groups = []
 
+        # Set presence online
+        self.set_online()
+
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
         ''' Handles incoming IQ messages, currently inactive. '''
@@ -251,8 +254,6 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
-            'PON'       : self.presenceon,
-            'POFF'      : self.presenceoff,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -312,6 +313,7 @@ class TomBotLayer(YowInterfaceLayer):
     def stop(self, restart=False):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
+        self.set_offline()
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
         if restart:
@@ -593,13 +595,13 @@ class TomBotLayer(YowInterfaceLayer):
             return False
         return False
 
-    def presenceon(self, _):
-        ''' Set presence as available, testing version '''
+    def set_online(self, *_):
+        ''' Set presence as available '''
         entity = AvailablePresenceProtocolEntity()
         self.toLower(entity)
 
-    def presenceoff(self, _):
-        ''' Set presence as unavailable, testing version '''
+    def set_offline(self, *_):
+        ''' Set presence as unavailable '''
         entity = UnavailablePresenceProtocolEntity()
         self.toLower(entity)
 
