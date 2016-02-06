@@ -87,7 +87,7 @@ class TomBotLayer(YowInterfaceLayer):
             reason = layerEvent.getArg('reason')
             logging.warning(_('Connection lost: {}').format(reason))
             if reason == 'Connection Closed':
-                time.sleep(10)
+                time.sleep(.5)
                 logging.warning(_('Reconnecting'))
                 self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
                 return True
