@@ -44,4 +44,10 @@ You're pretty, I'm pretty, want to go back to my place and stare at each other f
 %
 I have a netflix account.
 %
-On a scale from 1 to 10, you're a 9 and I'm the 1 you need.
+On a scale from 1 to 10, you're a 9 and I'm the 1 you need. 
+%
+I want to paint you green and spank you like a disobedient avocado.
+%
+I want to paint you purple and spank you like a disobedient eggplant. 
+%
+I want to paint you red and spank you like a disobedient tomato.
