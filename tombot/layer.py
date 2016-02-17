@@ -123,16 +123,21 @@ class TomBotLayer(YowInterfaceLayer):
 
             # Who sent the message?
             senderjid = determine_sender(message)
+            logging.debug('Resolving sender %s', senderjid)
             try:
                 sendername = self.jid_to_nick(senderjid)
+                logging.debug('Sendernick %s', sendername)
             except KeyError:
                 sendername = senderjid
+                logging.debug('Could not find jid %s', senderjid)
 
             # Who was mentioned?
             try:
                 targetjid = self.nick_to_jid(nick)
-            except KeyError:
+            except KeyError as e:
                 # Some nick that is unknown, pass
+                logging.debug('Could not resolve nick %s', nick)
+                logging.debug('Exception %s', e)
                 continue
 
             if targetjid not in mentioned_sent:
@@ -595,8 +600,8 @@ class TomBotLayer(YowInterfaceLayer):
         '''
         # Search authornames first
         queries = [
-            'SELECT jid FROM users WHERE primary_nick = ?',
-            'SELECT jid FROM nicks WHERE name = ?',
+            'SELECT jid FROM users WHERE primary_nick LIKE ?',
+            'SELECT jid FROM nicks WHERE name LIKE ?',
             ]
         for query in queries:
             self.cursor.execute(query, (name,))
