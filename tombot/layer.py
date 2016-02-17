@@ -527,12 +527,14 @@ class TomBotLayer(YowInterfaceLayer):
                 'SELECT id,jid,lastactive,primary_nick FROM users WHERE id = ?',
                 (cmd,))
         else:
-            self.cursor.execute(
-                'SELECT id,jid,lastactive,primary_nick FROM users WHERE primary_nick LIKE ?',
-                (cmd,))
-        result = self.cursor.fetchone()
-        if result is None:
-            return 'Ken ik niet'
+            try:
+                userjid = self.nick_to_jid(cmd)
+                self.cursor.execute(
+                    'SELECT id,jid,lastactive,primary_nick FROM users WHERE jid = ?',
+                    (userjid,))
+                result = self.cursor.fetchone()
+            except KeyError:
+                return 'Ken ik niet'
         reply = 'Nicks for {} ({}/{}):\n'.format(result[3], result[1], result[0])
         self.cursor.execute('SELECT name FROM nicks WHERE jid = ?',
                             (result[1],))
