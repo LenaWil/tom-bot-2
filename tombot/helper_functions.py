@@ -59,7 +59,7 @@ DICE_PATTERN = re.compile(DICE_REGEX, re.IGNORECASE)
 DICE_MODIFIER_OPERATORS = {
     '+': operator.add,
     '-': operator.sub,
-    '/': operator.div,
+    '/': operator.truediv,
     '*': operator.mul,
     'x': operator.mul,
     '%': operator.mod,

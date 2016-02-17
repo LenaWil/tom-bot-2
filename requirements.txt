@@ -1,6 +1,7 @@
 -e git://github.com/tgalal/yowsup.git#egg=yowsupgit
 -e git+https://github.com/spasticVerbalizer/fortune.git#egg=fortunegit
-duckduckgo2==0.242
+https://github.com/shantanoo/python-duckduckgo/archive/master.zip
+requests
 wolframalpha==1.2
 pushbullet-cli==0.7.1
 pylint==1.5.3
