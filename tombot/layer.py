@@ -123,40 +123,32 @@ class TomBotLayer(YowInterfaceLayer):
 
             # Who sent the message?
             senderjid = determine_sender(message)
-            self.cursor.execute('SELECT primary_nick FROM users WHERE jid = ?',
-                                (senderjid,))
-            senderres = self.cursor.fetchone()
-            if senderres is not None:
-                sendername = senderres[0]
-            else:
+            try:
+                sendername = self.jid_to_nick(senderjid)
+            except KeyError:
                 sendername = senderjid
 
             # Who was mentioned?
-            self.cursor.execute(
-                'SELECT jid,timeout,lastactive FROM users WHERE primary_nick LIKE ?',
-                (nick,))
-            result = self.cursor.fetchone()
-            if result is None:
-                self.cursor.execute('SELECT jid FROM nicks WHERE name LIKE ?',
-                                    (nick,))
-                result = self.cursor.fetchone()
-                if result is not None:
-                    self.cursor.execute('SELECT jid,timeout,lastactive FROM users WHERE jid LIKE ?',
-                                        (result[0],))
-                    result = self.cursor.fetchone()
+            try:
+                targetjid = self.nick_to_jid(nick)
+            except KeyError:
+                # Some nick that is unknown, pass
+                continue
 
-            if result is not None and result[0] not in mentioned_sent:
+            if targetjid not in mentioned_sent:
                 # Check timeout
+                t_info = self.get_jid_timeout(targetjid)
                 currenttime = (datetime.datetime.now() - datetime.datetime(
                     1970, 1, 1)).total_seconds()
-                if currenttime < (result[2] + result[1]) and message.participant:
-                    return
+                if currenttime < (t_info[1] + t_info[0]) and message.participant:
+                    # Do not send DM if recipient has not timed out yet
+                    continue
 
                 # Send mention notification: [author]: [body]
                 entity = TextMessageProtocolEntity('{}: {}'.format(
-                    sendername, message.getBody()), to=result[0])
+                    sendername, message.getBody()), to=targetjid)
                 self.toLower(entity)
-                mentioned_sent.append(result[0])
+                mentioned_sent.append(targetjid)
         # Updating user's last seen is after mentions so mention timeouts can be tested solo
         self.update_lastseen(message)
 
@@ -612,7 +604,7 @@ class TomBotLayer(YowInterfaceLayer):
             if result:
                 return result[0]
 
-        raise KeyError('Unknown nick!')
+        raise KeyError('Unknown nick {}!'.format(name))
 
     def jid_to_nick(self, jid):
         '''
@@ -626,7 +618,24 @@ class TomBotLayer(YowInterfaceLayer):
         if result:
             return result[0]
 
-        raise KeyError('Unknown jid!')
+        raise KeyError('Unknown jid {}'.format(jid))
+
+    def get_jid_timeout(self, jid):
+        '''
+        Retrieve a user's lastactive and timeout.
+
+        Returns a (timeout, lastactive) tuple.
+        Raises KeyError if jid not known.
+        '''
+        self.cursor.execute(
+            'SELECT timeout, lastactive FROM users WHERE jid = ?',
+            (jid,))
+        result = self.cursor.fetchone()
+
+        if result:
+            return result
+
+        raise KeyError('Unknown jid {}'.format(jid))
 
     # Loglevel changes
     def logdebug(self, message=None):
