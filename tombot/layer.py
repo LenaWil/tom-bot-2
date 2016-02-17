@@ -255,6 +255,7 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'BOTHER'    : self.anonsend,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -280,6 +281,40 @@ class TomBotLayer(YowInterfaceLayer):
             reply_message = TextMessageProtocolEntity(
                 response.encode('utf-8'), to=message.getFrom())
             self.toLower(reply_message)
+
+    def anonsend(self, message):
+        ''' Send a mention under the group name and not the author's name '''
+        if not message.participant:
+            return
+        self.cursor.execute('SELECT primary_nick FROM users WHERE jid = ?',
+                            (message.getFrom(),))
+        sendergroup = self.cursor.fetchone()
+        if sendergroup is None:
+            return 'This group is not enrolled in the BrotherBother program, sorry'
+        groupname = sendergroup[0]
+        text = extract_query(message, 2)
+        body = '{}: {}'.format(groupname, text)
+            # Who was mentioned?
+        nick = message.getBody().split()[2]
+        self.cursor.execute(
+            'SELECT jid,timeout,lastactive FROM users WHERE primary_nick LIKE ?',
+            (nick,))
+        result = self.cursor.fetchone()
+        if result is None:
+            self.cursor.execute('SELECT jid FROM nicks WHERE name LIKE ?',
+                                (nick,))
+            result = self.cursor.fetchone()
+            if result is not None:
+                self.cursor.execute('SELECT jid,timeout,lastactive FROM users WHERE jid LIKE ?',
+                                    (result[0],))
+                result = self.cursor.fetchone()
+
+        if result is None:
+            return 'Unknown recipient!'
+        recipient = result[0]
+
+        entity = TextMessageProtocolEntity(body, to=recipient)
+        self.toLower(entity)
 
     def help(self, message):
         ''' TODO: give an overview of available commands. '''
