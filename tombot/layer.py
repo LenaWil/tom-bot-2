@@ -286,32 +286,21 @@ class TomBotLayer(YowInterfaceLayer):
         ''' Send a mention under the group name and not the author's name '''
         if not message.participant:
             return
-        self.cursor.execute('SELECT primary_nick FROM users WHERE jid = ?',
-                            (message.getFrom(),))
-        sendergroup = self.cursor.fetchone()
-        if sendergroup is None:
+
+        try:
+            groupname = self.jid_to_nick(message.getFrom())
+        except KeyError:
             return 'This group is not enrolled in the BrotherBother program, sorry'
-        groupname = sendergroup[0]
+
         text = extract_query(message, 2)
         body = '{}: {}'.format(groupname, text)
-            # Who was mentioned?
-        nick = message.getBody().split()[2]
-        self.cursor.execute(
-            'SELECT jid,timeout,lastactive FROM users WHERE primary_nick LIKE ?',
-            (nick,))
-        result = self.cursor.fetchone()
-        if result is None:
-            self.cursor.execute('SELECT jid FROM nicks WHERE name LIKE ?',
-                                (nick,))
-            result = self.cursor.fetchone()
-            if result is not None:
-                self.cursor.execute('SELECT jid,timeout,lastactive FROM users WHERE jid LIKE ?',
-                                    (result[0],))
-                result = self.cursor.fetchone()
 
-        if result is None:
+        # Who was mentioned?
+        nick = message.getBody().split()[2]
+        try:
+            recipient = self.nick_to_jid(nick)
+        except KeyError:
             return 'Unknown recipient!'
-        recipient = result[0]
 
         entity = TextMessageProtocolEntity(body, to=recipient)
         self.toLower(entity)
@@ -605,6 +594,39 @@ class TomBotLayer(YowInterfaceLayer):
         ''' TODO: Remove a nickname from any user. '''
         # pylint: disable=unused-argument
         pass
+
+    def nick_to_jid(self, name):
+        '''
+        Maps a (nick)name to a jid using either users or nicks.
+
+        Raises KeyError if the name is unknown.
+        '''
+        # Search authornames first
+        queries = [
+            'SELECT jid FROM users WHERE primary_nick = ?',
+            'SELECT jid FROM nicks WHERE name = ?',
+            ]
+        for query in queries:
+            self.cursor.execute(query, (name,))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+
+        raise KeyError('Unknown nick!')
+
+    def jid_to_nick(self, jid):
+        '''
+        Map a jid to the user's primary_nick.
+
+        Raises KeyError if user not known.
+        '''
+        query = 'SELECT primary_nick FROM users WHERE jid = ?'
+        self.cursor.execute(query, (jid,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0]
+
+        raise KeyError('Unknown jid!')
 
     # Loglevel changes
     def logdebug(self, message=None):
