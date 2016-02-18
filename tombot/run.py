@@ -17,6 +17,7 @@ from yowsup.layers.protocol_messages    import YowMessagesProtocolLayer
 from yowsup.layers.protocol_receipts    import YowReceiptProtocolLayer
 from yowsup.layers.protocol_acks        import YowAckProtocolLayer
 from yowsup.layers.protocol_iq          import YowIqProtocolLayer
+from yowsup.layers.protocol_presence    import YowPresenceProtocolLayer
 from yowsup.layers.network              import YowNetworkLayer
 from yowsup.layers.coder                import YowCoderLayer
 from yowsup.stacks import YowStack
@@ -70,9 +71,9 @@ def main():
         layers = (
             TomBotLayer(config, scheduler),
             YowParallelLayer([
-                YowAuthenticationProtocolLayer, YowMessagesProtocolLayer,
-                YowIqProtocolLayer, YowReceiptProtocolLayer, YowChatstateProtocolLayer,
-                YowAckProtocolLayer, YowGroupsProtocolLayer
+                YowPresenceProtocolLayer, YowAuthenticationProtocolLayer,
+                YowMessagesProtocolLayer, YowIqProtocolLayer, YowReceiptProtocolLayer,
+                YowChatstateProtocolLayer, YowAckProtocolLayer, YowGroupsProtocolLayer
                 ]),
             YowAxolotlLayer,
         ) + YOWSUP_CORE_LAYERS
