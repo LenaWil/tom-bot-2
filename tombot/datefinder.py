@@ -1,6 +1,5 @@
 ''' Contains date/time finding logic. '''
 import re
-from collections import namedtuple
 from datetime import timedelta
 
 
