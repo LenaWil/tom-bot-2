@@ -51,3 +51,14 @@ def find_timedelta(text):
     result = timedelta(
         days=tdays, hours=hours, minutes=minutes, seconds=seconds)
     return result
+
+CLOCK_MARKERS = ['om', 'at']
+CLOCK_PAT = r'(#! )?((?P<hours>\d{1,2})(:?((?P<minutes>\d{2})(:?(?P<seconds>\d{2}))?)?))'.replace(
+    r'#!', '|'.join(CLOCK_MARKERS))
+CLOCK_REGEX = re.compile(CLOCK_PAT, re.IGNORECASE)
+def find_first_time(text):
+    '''
+    Find the next occurrence of a clock time, return as datetime.
+    '''
+    match = CLOCK_REGEX.search(text)
+    return match
