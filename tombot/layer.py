@@ -123,40 +123,37 @@ class TomBotLayer(YowInterfaceLayer):
 
             # Who sent the message?
             senderjid = determine_sender(message)
-            self.cursor.execute('SELECT primary_nick FROM users WHERE jid = ?',
-                                (senderjid,))
-            senderres = self.cursor.fetchone()
-            if senderres is not None:
-                sendername = senderres[0]
-            else:
+            logging.debug('Resolving sender %s', senderjid)
+            try:
+                sendername = self.jid_to_nick(senderjid)
+                logging.debug('Sendernick %s', sendername)
+            except KeyError:
                 sendername = senderjid
+                logging.debug('Could not find jid %s', senderjid)
 
             # Who was mentioned?
-            self.cursor.execute(
-                'SELECT jid,timeout,lastactive FROM users WHERE primary_nick LIKE ?',
-                (nick,))
-            result = self.cursor.fetchone()
-            if result is None:
-                self.cursor.execute('SELECT jid FROM nicks WHERE name LIKE ?',
-                                    (nick,))
-                result = self.cursor.fetchone()
-                if result is not None:
-                    self.cursor.execute('SELECT jid,timeout,lastactive FROM users WHERE jid LIKE ?',
-                                        (result[0],))
-                    result = self.cursor.fetchone()
+            try:
+                targetjid = self.nick_to_jid(nick)
+            except KeyError as e:
+                # Some nick that is unknown, pass
+                logging.debug('Could not resolve nick %s', nick)
+                logging.debug('Exception %s', e)
+                continue
 
-            if result is not None and result[0] not in mentioned_sent:
+            if targetjid not in mentioned_sent:
                 # Check timeout
+                t_info = self.get_jid_timeout(targetjid)
                 currenttime = (datetime.datetime.now() - datetime.datetime(
                     1970, 1, 1)).total_seconds()
-                if currenttime < (result[2] + result[1]) and message.participant:
-                    return
+                if currenttime < (t_info[1] + t_info[0]) and message.participant:
+                    # Do not send DM if recipient has not timed out yet
+                    continue
 
                 # Send mention notification: [author]: [body]
                 entity = TextMessageProtocolEntity('{}: {}'.format(
-                    sendername, message.getBody()), to=result[0])
+                    sendername, message.getBody()), to=targetjid)
                 self.toLower(entity)
-                mentioned_sent.append(result[0])
+                mentioned_sent.append(targetjid)
         # Updating user's last seen is after mentions so mention timeouts can be tested solo
         self.update_lastseen(message)
 
@@ -255,6 +252,7 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'BOTHER'    : self.anonsend,
             }
         content = message.getBody()
         text = content.upper().split()
@@ -280,6 +278,29 @@ class TomBotLayer(YowInterfaceLayer):
             reply_message = TextMessageProtocolEntity(
                 response.encode('utf-8'), to=message.getFrom())
             self.toLower(reply_message)
+
+    def anonsend(self, message):
+        ''' Send a mention under the group name and not the author's name '''
+        if not message.participant:
+            return
+
+        try:
+            groupname = self.jid_to_nick(message.getFrom())
+        except KeyError:
+            return 'This group is not enrolled in the BrotherBother program, sorry'
+
+        text = extract_query(message, 2)
+        body = '{}: {}'.format(groupname, text)
+
+        # Who was mentioned?
+        nick = message.getBody().split()[2]
+        try:
+            recipient = self.nick_to_jid(nick)
+        except KeyError:
+            return 'Unknown recipient!'
+
+        entity = TextMessageProtocolEntity(body, to=recipient)
+        self.toLower(entity)
 
     def help(self, message):
         ''' TODO: give an overview of available commands. '''
@@ -506,12 +527,14 @@ class TomBotLayer(YowInterfaceLayer):
                 'SELECT id,jid,lastactive,primary_nick FROM users WHERE id = ?',
                 (cmd,))
         else:
-            self.cursor.execute(
-                'SELECT id,jid,lastactive,primary_nick FROM users WHERE primary_nick LIKE ?',
-                (cmd,))
-        result = self.cursor.fetchone()
-        if result is None:
-            return 'Ken ik niet'
+            try:
+                userjid = self.nick_to_jid(cmd)
+                self.cursor.execute(
+                    'SELECT id,jid,lastactive,primary_nick FROM users WHERE jid = ?',
+                    (userjid,))
+                result = self.cursor.fetchone()
+            except KeyError:
+                return 'Ken ik niet'
         reply = 'Nicks for {} ({}/{}):\n'.format(result[3], result[1], result[0])
         self.cursor.execute('SELECT name FROM nicks WHERE jid = ?',
                             (result[1],))
@@ -570,6 +593,56 @@ class TomBotLayer(YowInterfaceLayer):
         ''' TODO: Remove a nickname from any user. '''
         # pylint: disable=unused-argument
         pass
+
+    def nick_to_jid(self, name):
+        '''
+        Maps a (nick)name to a jid using either users or nicks.
+
+        Raises KeyError if the name is unknown.
+        '''
+        # Search authornames first
+        queries = [
+            'SELECT jid FROM users WHERE primary_nick LIKE ?',
+            'SELECT jid FROM nicks WHERE name LIKE ?',
+            ]
+        for query in queries:
+            self.cursor.execute(query, (name,))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+
+        raise KeyError('Unknown nick {}!'.format(name))
+
+    def jid_to_nick(self, jid):
+        '''
+        Map a jid to the user's primary_nick.
+
+        Raises KeyError if user not known.
+        '''
+        query = 'SELECT primary_nick FROM users WHERE jid = ?'
+        self.cursor.execute(query, (jid,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0]
+
+        raise KeyError('Unknown jid {}'.format(jid))
+
+    def get_jid_timeout(self, jid):
+        '''
+        Retrieve a user's lastactive and timeout.
+
+        Returns a (timeout, lastactive) tuple.
+        Raises KeyError if jid not known.
+        '''
+        self.cursor.execute(
+            'SELECT timeout, lastactive FROM users WHERE jid = ?',
+            (jid,))
+        result = self.cursor.fetchone()
+
+        if result:
+            return result
+
+        raise KeyError('Unknown jid {}'.format(jid))
 
     # Loglevel changes
     def logdebug(self, message=None):
