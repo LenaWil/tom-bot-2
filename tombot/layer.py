@@ -622,7 +622,7 @@ class TomBotLayer(YowInterfaceLayer):
         timespec = body.split()[0]
         trytime = dateutil.parser.parse(body, fuzzy=True)
         delta = None
-        if timespec in datefinder.DURATION_MARKERS:
+        if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
             delta = datetime.datetime.now() + datefinder.find_timedelta(body)
         elif timespec in datefinder.CLOCK_MARKERS:
             try:
@@ -633,14 +633,17 @@ class TomBotLayer(YowInterfaceLayer):
             deadline = delta
         else:
             deadline = trytime
-        logging.info('Parsed message %s', body)
+        logging.debug('Parsed reminder command "%s"', body)
         logging.info('Deadline %s from message "%s".',
                      deadline, body)
+        reply = 'Reminder set for {}.'.format(deadline)
+        message = TextMessageProtocolEntity(
+            to=determine_sender(message), body=reply)
         self.scheduler.add_job(
             rpc.remote_send, 'date',
             [body, determine_sender(message)],
             run_date=deadline)
-        return 'Ok'
+        return
 
     def nick_to_jid(self, name):
         '''
