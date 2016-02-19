@@ -621,13 +621,15 @@ class TomBotLayer(YowInterfaceLayer):
         body = extract_query(message)
         timespec = body.split()[0]
         trytime = dateutil.parser.parse(body, fuzzy=True)
-        run_date = None
+        delta = None
         if timespec in datefinder.DURATION_MARKERS:
-            run_date = datetime.datetime.now() + datefinder.find_timedelta(body)
+            delta = datetime.datetime.now() + datefinder.find_timedelta(body)
         elif timespec in datefinder.CLOCK_MARKERS:
-            run_date = datefinder.find_first_time(body)
-        if run_date:
-            deadline = trytime.replace(run_date)
+            try:
+                time = datefinder.find_first_time(body)
+                trytime.replace(hour=time.hour, minute=time.minute, second=time.second)
+        if delta:
+            deadline = delta
         else:
             deadline = trytime
         logging.info('Parsed message %s', body)
