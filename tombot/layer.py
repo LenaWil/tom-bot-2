@@ -637,8 +637,9 @@ class TomBotLayer(YowInterfaceLayer):
         logging.info('Deadline %s from message "%s".',
                      deadline, body)
         reply = 'Reminder set for {}.'.format(deadline)
-        message = TextMessageProtocolEntity(
+        replymessage = TextMessageProtocolEntity(
             to=determine_sender(message), body=reply)
+        self.toLower(replymessage)
         self.scheduler.add_job(
             rpc.remote_send, 'date',
             [body, determine_sender(message)],
