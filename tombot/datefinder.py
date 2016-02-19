@@ -2,6 +2,7 @@
 import re
 import datetime
 from datetime import timedelta
+import dateutil.parser
 
 
 YEAR_WORDS = ['y', 'j', 'jaar', 'jaren', 'years', 'year']
@@ -79,3 +80,35 @@ def find_first_time(text):
     if result < datetime.datetime.now():
         result = result + datetime.timedelta(days=1)
     return result
+
+class Biliparserinfo(dateutil.parser.parserinfo):
+    ''' Bilingual dutch/english dateutil parserinfo '''
+    JUMP = [" ", ".", ",", ";", "-", "/", "'",
+            "at", "on", "and", "ad", "m", "t", "of",
+            "st", "nd", "rd", "th",
+            "op", "en", "de", "ste", "van"]
+    WEEKDAYS = [("Mon", "Monday", "Ma", "Maa", "Maandag"),
+                ("Tue", "Tuesday", "Di", "Din", "Dinsdag"),
+                ("Wed", "Wednesday", "Wo", "Woe", "Woensdag"),
+                ("Thu", "Thursday", "Do", "Don", "Donderdag"),
+                ("Fri", "Friday", "Vr", "Vri", "Vrijdag"),
+                ("Sat", "Saturday", "Za", "Zat", "Zaterdag"),
+                ("Sun", "Sunday", "Zo", "Zon", "Zondag")]
+    MONTHS = [("Jan", "January", "Januari"),
+              ("Feb", "February", "Februari"),
+              ("Mar", "March", "Maart"),
+              ("Apr", "April"),
+              ("May", "May", "Mei"),
+              ("Jun", "June", "Juni"),
+              ("Jul", "July", "Juli"),
+              ("Aug", "August", "Augustus"),
+              ("Sep", "Sept", "September"),
+              ("Oct", "October", "Oktober"),
+              ("Nov", "November"),
+              ("Dec", "December")]
+    HMS = [("h", "hour", "hours", "uur", "uren", "u"),
+           ("m", "minute", "minutes", "minuut", "minuten", "min", "mins"),
+           ("s", "second", "seconds", "sec", "seconden", "secondes", "secs")]
+    PERTAIN = ["of"]
+
+BPI = Biliparserinfo()

@@ -620,7 +620,7 @@ class TomBotLayer(YowInterfaceLayer):
         ''' (Hopefully) sends user a message at the given time '''
         body = extract_query(message)
         timespec = body.split()[0]
-        trytime = dateutil.parser.parse(body, fuzzy=True)
+        trytime = dateutil.parser.parse(body, parserinfo=datefinder.BPI, fuzzy=True)
         delta = None
         if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
             try:
