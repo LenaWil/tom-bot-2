@@ -1,5 +1,6 @@
 ''' Contains date/time finding logic. '''
 import re
+import datetime
 from datetime import timedelta
 
 
@@ -53,12 +54,22 @@ def find_timedelta(text):
     return result
 
 CLOCK_MARKERS = ['om', 'at']
-CLOCK_PAT = r'(#! )?((?P<hours>\d{1,2})(:?((?P<minutes>\d{2})(:?(?P<seconds>\d{2}))?)?))'.replace(
+CLOCK_PAT = r'(#! )?((?P<hour>\d{1,2})(:?((?P<minute>\d{2})(:?(?P<second>\d{2}))?)?))'.replace(
     r'#!', '|'.join(CLOCK_MARKERS))
 CLOCK_REGEX = re.compile(CLOCK_PAT, re.IGNORECASE)
 def find_first_time(text):
     '''
-    Find the next occurrence of a clock time, return as datetime.
+    Find the first occurrence of a clock time, return as datetime in today or tomorrow.
+    Raises ValueError if no time is found.
     '''
     match = CLOCK_REGEX.search(text)
-    return match
+    if not match:
+        raise ValueError('No time found!')
+    hour = int(match.group('hour'))
+    minute = int(match.group('minute')) if match.group('minute') else 0
+    second = int(match.group('second')) if match.group('second') else 0
+    result = datetime.datetime.now().replace(
+        hour=hour, minute=minute, second=second)
+    if result < datetime.datetime.now():
+        result = result + datetime.timedelta(days=1)
+    return result
