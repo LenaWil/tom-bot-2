@@ -54,10 +54,10 @@ def find_timedelta(text):
     return result
 
 CLOCK_MARKERS = ['om', 'at']
-CLOCK_PAT = r'(#! )?((?P<hour>\d{1,2})(:?((?P<minute>\d{2})(:?(?P<second>\d{2}))?)?))'.replace(
+CLOCK_PAT = r'((#!)\s?)?((?P<hour>\d{1,2})(:?((?P<minute>\d{2})(:?(?P<second>\d{2}))?)?))'.replace(
     r'#!', '|'.join(CLOCK_MARKERS))
-STRICT_CLOCK_PAT = r'((?P<hour>\d{1,2})(:?(?P<minute>\d{2})|\s?(#!)))'.replace(
-    '#!', '|'.join(HOUR_WORDS))
+STRICT_CLOCK_PAT = r'((#@)\s?)?((?P<hour>\d{1,2})(:?(?P<minute>\d{2})|\s?(#!)))'.replace(
+    '#!', '|'.join(HOUR_WORDS)).replace('#@', '|'.join(CLOCK_MARKERS))
 CLOCK_REGEX = re.compile(CLOCK_PAT, re.IGNORECASE)
 STRICT_CLOCK_REGEX = re.compile(STRICT_CLOCK_PAT, re.IGNORECASE)
 def find_first_time(text):
