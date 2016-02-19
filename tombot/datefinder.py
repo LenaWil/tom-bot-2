@@ -38,10 +38,13 @@ def find_timedelta(text):
     Returns a timedelta, zero-length if no matches.
     '''
     matches = REGEX.findall(text)
+    match = None
     for res in matches:
         if any(res):
             match = res
             break
+    if not match:
+        raise ValueError('Could not extract duration!')
     years = int(match[1]) if match[1] else 0 # in tdays
     weeks = int(match[5]) if match[5] else 0 # in tdays
     days = int(match[9]) if match[9] else 0 # in tdays
@@ -56,7 +59,7 @@ def find_timedelta(text):
 CLOCK_MARKERS = ['om', 'at']
 CLOCK_PAT = r'((#!)\s?)?((?P<hour>\d{1,2})(:?((?P<minute>\d{2})(:?(?P<second>\d{2}))?)?))'.replace(
     r'#!', '|'.join(CLOCK_MARKERS))
-STRICT_CLOCK_PAT = r'((#@)\s?)?((?P<hour>\d{1,2})(:?(?P<minute>\d{2})|\s?(#!)))'.replace(
+STRICT_CLOCK_PAT = r'((#@)\s?)?((?P<hour>\d{1,2})(:?(?P<minute>\d{2})|\s?(#!)))(?![-/])'.replace(
     '#!', '|'.join(HOUR_WORDS)).replace('#@', '|'.join(CLOCK_MARKERS))
 CLOCK_REGEX = re.compile(CLOCK_PAT, re.IGNORECASE)
 STRICT_CLOCK_REGEX = re.compile(STRICT_CLOCK_PAT, re.IGNORECASE)

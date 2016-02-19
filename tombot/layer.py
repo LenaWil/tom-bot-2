@@ -623,7 +623,10 @@ class TomBotLayer(YowInterfaceLayer):
         trytime = dateutil.parser.parse(body, fuzzy=True)
         delta = None
         if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
-            delta = datetime.datetime.now() + datefinder.find_timedelta(body)
+            try:
+                delta = datetime.datetime.now() + datefinder.find_timedelta(body)
+            except ValueError:
+                delta = None
         elif timespec in datefinder.CLOCK_MARKERS:
             try:
                 trytime = datefinder.find_first_time(body)
