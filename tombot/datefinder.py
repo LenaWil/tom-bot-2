@@ -25,7 +25,7 @@ HOUR_PART = r'((?P<hours>\d+)\s*?({}){})?'.format('|'.join(HOUR_WORDS), SEP_PART
 MINUTE_PART = r'((?P<minutes>\d+)\s*?({}){})?'.format('|'.join(MINUTE_WORDS), SEP_PART)
 SECOND_PART = r'((?P<seconds>\d+)\s*?({}))?'.format('|'.join(SECOND_WORDS))
 
-FUTURE_MARKERS = ['in', 'over', 'na']
+DURATION_MARKERS = ['in', 'over', 'na']
 
 MONSTER = ''.join([YEAR_PART, WEEK_PART, DAY_PART, HOUR_PART, MINUTE_PART, SECOND_PART])
 REGEX = re.compile(MONSTER, re.IGNORECASE)

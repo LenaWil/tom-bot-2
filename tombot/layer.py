@@ -620,10 +620,10 @@ class TomBotLayer(YowInterfaceLayer):
         ''' (Hopefully) sends user a message at the given time '''
         body = extract_query(message)
         timespec = body.split()[0]
-        trytime = datetime.parser.parse(body, fuzzy=True)
+        trytime = dateutil.parser.parse(body, fuzzy=True)
         run_date = None
         if timespec in datefinder.DURATION_MARKERS:
-            run_date = datefinder.find_timedelta(body)
+            run_date = datetime.datetime.now() + datefinder.find_timedelta(body)
         elif timespec in datefinder.CLOCK_MARKERS:
             run_date = datefinder.find_first_time(body)
         if run_date:
@@ -631,7 +631,8 @@ class TomBotLayer(YowInterfaceLayer):
         else:
             deadline = trytime
         logging.info('Parsed message %s', body)
-        logging.info('Deadline %s comes from run_date %s and trytime %s.', deadline, run_date, trytime)
+        logging.info('Deadline %s comes from run_date %s and trytime %s.',
+                     deadline, run_date, trytime)
         self.scheduler.add_job(
             rpc.remote_send, 'date',
             [body, determine_sender(message)],
