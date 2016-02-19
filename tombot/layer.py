@@ -626,15 +626,17 @@ class TomBotLayer(YowInterfaceLayer):
             delta = datetime.datetime.now() + datefinder.find_timedelta(body)
         elif timespec in datefinder.CLOCK_MARKERS:
             try:
-                time = datefinder.find_first_time(body)
-                trytime.replace(hour=time.hour, minute=time.minute, second=time.second)
+                ftime = datefinder.find_first_time(body)
+                trytime.replace(hour=ftime.hour, minute=ftime.minute, second=ftime.second)
+            except ValueError:
+                logging.error('Cannot find time in %s', body)
         if delta:
             deadline = delta
         else:
             deadline = trytime
         logging.info('Parsed message %s', body)
-        logging.info('Deadline %s comes from run_date %s and trytime %s.',
-                     deadline, run_date, trytime)
+        logging.info('Deadline %s from message %s.',
+                     deadline, body)
         self.scheduler.add_job(
             rpc.remote_send, 'date',
             [body, determine_sender(message)],
