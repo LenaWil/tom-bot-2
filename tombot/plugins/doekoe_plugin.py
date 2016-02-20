@@ -1,11 +1,25 @@
-''' Twoekoe: calculate when munnie '''
+# coding: utf-8
+'''
+Doekoe: bereken wanneer je geld krijgt.
+
+Deze module bevat een commando om te berekenen wanneer verschillende uitbetalingen
+plaatsvinden, zie de docstring van doekoe().
+'''
 from __future__ import print_function
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from .registry import register_command
 
 
 def doekoe():
-    ''' Doekoe: zie wanneer je weer geld krijgt '''
+    '''
+    Bereken wanneer verschillende uitbetalingen gebeuren.
+
+    De huidige uitbetalingen zijn:
+      - SAH Loon: de eerstvolgende 8e van een maand
+      - Zorgtoeslag: de eerste werkdag na de 20e
+      - Studiefinanciëring: de laatste werkdag voor de 24e
+    '''
     res = ""
     today = date.today()
     next_month = today + relativedelta(months=1)
@@ -51,14 +65,28 @@ def doekoe():
     res += '\nAan deze informatie kunnen geen rechten worden ontleend.'
     return res
 
+@register_command(['doekoe', 'duku', 'geld', 'gheldt', 'munnie', 'moneys', 'cash'])
+def doekoe_cb(*args, **kwargs):
+    return doekoe()
+
+doekoe_cb.__doc__ = doekoe.__doc__
+
 def first_weekday_after(arg):
-    ''' Finds the first weekday on or after the given date. '''
+    '''
+    Find the first weekday on or after the given date.
+    
+    If the argument is a Saturday or Sunday, the Monday after is returned.
+    '''
     if arg.weekday() < 5:
         return arg
     return arg + relativedelta(days=7 - arg.weekday())
 
 def last_weekday_before(arg):
-    ''' Returns the first weekday on or before the given date. '''
+    '''
+    Find the first weekday on or before the given date.
+    
+    If the argument is a Saturday or Sunday, the preceding Friday is returned.
+    '''
     if arg.weekday() < 5:
         return arg
     return arg + relativedelta(days=4 - arg.weekday())

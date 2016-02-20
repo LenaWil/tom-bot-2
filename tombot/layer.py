@@ -15,7 +15,7 @@ import fortune
 
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
-from .doekoe import doekoe
+from .plugins.doekoe_plugin import doekoe
 import tombot.rpc as rpc
 import tombot.datefinder as datefinder
 from yowsup.layers.interface \
