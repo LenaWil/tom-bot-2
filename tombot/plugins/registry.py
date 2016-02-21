@@ -14,12 +14,14 @@ def get_easy_logger(name, level=logging.INFO):
     Create a logger with a console handler and a basic format.
     '''
     result = logging.getLogger(name)
-    result.setLevel(level)
-    formatter = logging.Formatter('%(levelname)s - %(name)s - %(message)s')
-    handler = logging.StreamHandler()
-    handler.setLevel(level)
-    handler.setFormatter(formatter)
-    result.addHandler(handler)
+    if not result.handlers:
+        result.setLevel(level)
+        formatter = logging.Formatter('%(levelname)s - %(name)s - %(message)s')
+        handler = logging.StreamHandler()
+        handler.setLevel(level)
+        handler.setFormatter(formatter)
+        result.addHandler(handler)
+        result.propagate = False
     return result
 
 LOGGER = get_easy_logger('tombot.pluginloader')
@@ -31,8 +33,9 @@ class register_command(object):
     Adds a function to the command dict, either by name or list of names.
     Decorated functions must accept at least two arguments (bot, message).
     '''
-    def __init__(self, name):
+    def __init__(self, name, hidden=False):
         self.name = name
+        self.hidden = hidden
 
     def __call__(self, func):
         if hasattr(self.name, '__iter__'):

@@ -5,7 +5,6 @@ import logging
 import time
 import random
 import re
-import urllib
 import sqlite3
 import datetime
 import threading
@@ -13,9 +12,9 @@ import wolframalpha
 import dateutil.parser
 import fortune
 
-from .helper_functions import extract_query, determine_sender, ddg_respond
-from .helper_functions import forcelog, ping, unknown_command, diceroll
-from .plugins.doekoe_plugin import doekoe
+from . import plugins
+from .helper_functions import extract_query, determine_sender
+from .helper_functions import forcelog, ping, unknown_command
 import tombot.rpc as rpc
 import tombot.datefinder as datefinder
 from yowsup.layers.interface \
@@ -30,8 +29,6 @@ from yowsup.layers.protocol_receipts.protocolentities \
         import OutgoingReceiptProtocolEntity
 from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
-from yowsup.layers.protocol_chatstate.protocolentities \
-        import OutgoingChatstateProtocolEntity, ChatstateProtocolEntity
 from yowsup.layers.protocol_presence.protocolentities \
         import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
 
@@ -85,6 +82,31 @@ class TomBotLayer(YowInterfaceLayer):
 
         # Start the passed scheduler
         self.scheduler.start()
+
+        self.functions = {  # Plugins :D
+            'HELP'      : self.help,
+            'FORCELOG'  : forcelog,
+            'SHUTDOWN'  : self.stopmsg,
+            'RESTART'   : self.restartmsg,
+            'PING'      : ping,
+            'ADMINCHECK': self.isadmin,
+            'DBSETUP'   : self.collect_users,
+            'LOGINFO'   : self.loginfo,
+            'LOGDEBUG'  : self.logdebug,
+            'GNS'       : self.get_nameless_seen,
+            'REGISTER'  : self.register_user,
+            'FTIMEOUT'  : self.set_other_timeout,
+            'TIMEOUT'   : self.set_own_timeout,
+            'MYNICKS'   : self.list_own_nicks,
+            'ADDNICK'   : self.add_own_nick,
+            'RMNICK'    : self.remove_own_nick,
+            'USER'      : self.list_other_nicks,
+            'REMINDME'  : self.addreminder,
+            'REMIND'    : self.addreminder,
+            'BOTHER'    : self.anonsend,
+            }
+        plugins.load_plugins()
+        self.functions.update(plugins.COMMANDS)
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -227,51 +249,6 @@ class TomBotLayer(YowInterfaceLayer):
 
     def react(self, message):
         ''' Generates a response to a message using a response function and sends it. '''
-        functions = {  # Has to be inside function because of usage of self
-            'HELP'      : self.help,
-            'FORCELOG'  : forcelog,
-            '8BALL'     : self.eightball,
-            'IS'        : self.eightball,
-            'FORTUNE'   : self.fortune,
-            'SHUTDOWN'  : self.stopmsg,
-            'RESTART'   : self.restartmsg,
-            'PING'      : ping,
-            'CALCULATE' : self.wolfram,
-            'CALC'      : self.wolfram,
-            'BEREKEN'   : self.wolfram,
-            'DEFINE'    : ddg_respond,
-            'DDG'       : ddg_respond,
-            'ROLL'      : diceroll,
-            'ADMINCHECK': self.isadmin,
-            'COOKIE'    : self.cookie,
-            self.koekje      : self.cookie,
-            'KOEKJE'    : self.cookie,
-            'LARS'      : self.lars,
-            'LOVEYOU'   : self.lars,
-            'DATE'      : self.lars,
-            'PICKUP'    : self.lars,
-            'DBSETUP'   : self.collect_users,
-            'LOGINFO'   : self.loginfo,
-            'LOGDEBUG'  : self.logdebug,
-            'GNS'       : self.get_nameless_seen,
-            'REGISTER'  : self.register_user,
-            'FTIMEOUT'  : self.set_other_timeout,
-            'TIMEOUT'   : self.set_own_timeout,
-            'MYNICKS'   : self.list_own_nicks,
-            'ADDNICK'   : self.add_own_nick,
-            'RMNICK'    : self.remove_own_nick,
-            'USER'      : self.list_other_nicks,
-            'DOEKOE'    : lambda x: doekoe(),
-            'DUKU'      : lambda x: doekoe(),
-            'GELD'      : lambda x: doekoe(),
-            'GHELDT'    : lambda x: doekoe(),
-            'CASH'      : lambda x: doekoe(),
-            'MUNNIE'    : lambda x: doekoe(),
-            'MONEYS'    : lambda x: doekoe(),
-            'REMINDME'  : self.addreminder,
-            'REMIND'    : self.addreminder,
-            'BOTHER'    : self.anonsend,
-            }
         content = message.getBody()
         text = content.upper().split()
         isgroup = False
@@ -281,7 +258,7 @@ class TomBotLayer(YowInterfaceLayer):
                 return
             text.remove(text[0])
         try:
-            response = functions[text[0]](message)
+            response = self.functions[text[0]](message)
         except IndexError:
             return
         except KeyError:
@@ -384,34 +361,6 @@ class TomBotLayer(YowInterfaceLayer):
             return fortune.get_random_fortune(self.specials['userwarn.spc'])
         except KeyError:
             return "Don't do that"
-
-    def wolfram(self, message):
-        ''' Answer question using WolframAlpha API '''
-        if not self.wolfram_client:
-            return _('Not connected to WolframAlpha!')
-        query = extract_query(message)
-        logging.debug('Query to WolframAlpha: %s', query)
-        entity = OutgoingChatstateProtocolEntity(
-            ChatstateProtocolEntity.STATE_TYPING, message.getFrom())
-        self.toLower(entity)
-        result = self.wolfram_client.query(query)
-        entity = OutgoingChatstateProtocolEntity(
-            ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
-        self.toLower(entity)
-        restext = _('Result from WolframAlpha:\n')
-        results = [p.text for p in result.pods
-                   if p.title in ('Result', 'Value', 'Decimal approximation', 'Exact result')]
-        if len(results) == 0:
-            return _('No result.')
-        restext += '\n'.join(results) + '\n'
-        restext += 'Link: https://wolframalpha.com/input/?i={}'.format(
-            urllib.quote(query).replace('%20', '+'))
-        return restext
-
-    def lars(self, message):
-        ''' Sends (bad) genderless pickupline to sender. '''
-        # pylint: disable=unused-argument
-        return fortune.get_random_fortune(self.specials['pickupline.spc']).decode('utf-8')
 
     # NewNicks
     def collect_users(self, message=None):

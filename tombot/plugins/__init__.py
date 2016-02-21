@@ -2,12 +2,11 @@
 Provides the plugin infrastructure and some helper functions for plugins.
 '''
 import os.path
-import logging
 import importlib
 from .registry import COMMANDS, get_easy_logger
 
 
-LOGGER = get_easy_logger('tombot.moduleloader')
+LOGGER = get_easy_logger('moduleloader')
 
 def load_plugins():
     '''
