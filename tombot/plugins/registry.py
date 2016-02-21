@@ -1,13 +1,13 @@
 '''
 Contains functions to be used commonly in plugins.
 '''
-import functools
+# pylint: disable=too-few-public-methods, invalid-name
 import logging
 
 
-commands = {}
-startup_functions = set()
-shutdown_functions = set()
+COMMANDS = {}
+STARTUP_FUNCTIONS = set()
+SHUTDOWN_FUNCTIONS = set()
 
 def get_easy_logger(name, level=logging.INFO):
     '''
@@ -16,13 +16,13 @@ def get_easy_logger(name, level=logging.INFO):
     result = logging.getLogger(name)
     result.setLevel(level)
     formatter = logging.Formatter('%(levelname)s - %(name)s - %(message)s')
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(formatter)
-    result.addHandler(ch)
+    handler = logging.StreamHandler()
+    handler.setLevel(level)
+    handler.setFormatter(formatter)
+    result.addHandler(handler)
     return result
 
-logger = get_easy_logger('tombot.pluginloader')
+LOGGER = get_easy_logger('tombot.pluginloader')
 
 class register_command(object):
     '''
@@ -37,10 +37,10 @@ class register_command(object):
     def __call__(self, func):
         if hasattr(self.name, '__iter__'):
             for item in self.name:
-                commands[item.upper()] = func
+                COMMANDS[item.upper()] = func
         else:
-            commands[self.name.upper()] = func
-        logger.debug('Registered command %s', self.name)
+            COMMANDS[self.name.upper()] = func
+        LOGGER.debug('Registered command %s', self.name)
         return func
 
 class register_startup(object):
@@ -50,8 +50,8 @@ class register_startup(object):
     Decorated functions must accept at least one argument, bot.
     '''
     def __init__(self, f):
-        startup_functions.add(f)
-        logger.debug('Registered startup function %s', f)
+        STARTUP_FUNCTIONS.add(f)
+        LOGGER.debug('Registered startup function %s', f)
 
     def __call__(self):
         pass
@@ -63,8 +63,8 @@ class register_shutdown(object):
     Decorated functions must accept at least one argument, bot.
     '''
     def __init__(self, f):
-        shutdown_functions.add(f)
-        logger.debug('Registered shutdown function %s', f)
+        SHUTDOWN_FUNCTIONS.add(f)
+        LOGGER.debug('Registered shutdown function %s', f)
 
     def __call__(self):
         pass

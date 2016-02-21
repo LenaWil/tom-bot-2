@@ -67,14 +67,20 @@ def doekoe():
 
 @register_command(['doekoe', 'duku', 'geld', 'gheldt', 'munnie', 'moneys', 'cash'])
 def doekoe_cb(*args, **kwargs):
-    return doekoe()
+    '''
+    Tel af tot wanneer je weer geld krijgt.
 
-doekoe_cb.__doc__ = doekoe.__doc__
+    De huidige uitbetalingen zijn:
+      - SAH Loon: de eerstvolgende 8e van een maand
+      - Zorgtoeslag: de eerste werkdag na de 20e
+      - Studiefinanciëring: de laatste werkdag voor de 24e
+    '''
+    return doekoe()
 
 def first_weekday_after(arg):
     '''
     Find the first weekday on or after the given date.
-    
+
     If the argument is a Saturday or Sunday, the Monday after is returned.
     '''
     if arg.weekday() < 5:
@@ -84,7 +90,7 @@ def first_weekday_after(arg):
 def last_weekday_before(arg):
     '''
     Find the first weekday on or before the given date.
-    
+
     If the argument is a Saturday or Sunday, the preceding Friday is returned.
     '''
     if arg.weekday() < 5:
