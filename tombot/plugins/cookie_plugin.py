@@ -4,6 +4,7 @@ spouts cookie quotes.
 '''
 import fortune
 from .registry import register_command, get_easy_logger
+from .fortune_plugin import SPECIALS
 
 
 LOGGER = get_easy_logger('plugins.cookie')
@@ -11,10 +12,10 @@ LOGGER = get_easy_logger('plugins.cookie')
 @register_command(['cookie', 'koekje', '\xf0\x9f\x8d\xaa'])
 def cookie_cb(bot, *args, **kwargs):
     '''
-    Provide random vaguely cookie-related quotes.
+    Return a cookie-related quote.
     '''
     try:
-        return fortune.get_random_fortune(bot.specials['cookie.spc'])
+        return fortune.get_random_fortune(SPECIALS['cookie.spc'])
     except KeyError:
         LOGGER.error('Specials file was not loaded!')
         return 'Error!\xf0\x9f\x8d\xaa'

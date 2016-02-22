@@ -24,7 +24,7 @@ def get_easy_logger(name, level=logging.INFO):
         result.propagate = False
     return result
 
-LOGGER = get_easy_logger('tombot.pluginloader')
+LOGGER = get_easy_logger('pluginloader')
 
 class register_command(object):
     '''

@@ -8,6 +8,8 @@ from .registry import register_command, get_easy_logger, register_startup
 
 
 LOGGER = get_easy_logger('plugins.fortune')
+FORTUNE_FILES = []
+SPECIALS = {}
 
 @register_command('fortune')
 def fortune_cb(bot, *args, **kwargs):
@@ -15,7 +17,7 @@ def fortune_cb(bot, *args, **kwargs):
     Return a random quote from one of the quote files.
     '''
     try:
-        source = random.choice(bot.fortune_files)
+        source = random.choice(FORTUNE_FILES)
         return fortune.get_random_fortune(source)
     except ValueError as ex:
         LOGGER.error('Fortune failed: %s', ex)
@@ -23,7 +25,7 @@ def fortune_cb(bot, *args, **kwargs):
 
 @register_startup
 @register_command('loadfortunes', hidden=True)
-def load_fortunes_cb(bot, *args, **kwargs):
+def load_fortunes_cb(bot, message=None, *args, **kwargs):
     '''
     (Re)load all fortune and specials files from their directories.
     '''
@@ -36,12 +38,12 @@ def load_fortunes_cb(bot, *args, **kwargs):
             abspath = os.path.join(root, file_)
             try:
                 fortune.make_fortune_data_file(abspath, True)
-                bot.specials[file_] = abspath
+                SPECIALS[file_] = abspath
                 LOGGER.debug('Specials file %s loaded.', abspath)
             except ValueError as ex:
                 LOGGER.error('Specials file %s failed to load: %s',
                              abspath, ex)
-    LOGGER.info('%s specials loaded.', len(bot.specials))
+    LOGGER.info('%s specials loaded.', len(SPECIALS))
 
     LOGGER.info('Loading fortunes.')
     for root, dummy, files in os.walk('fortunes/'):
@@ -52,15 +54,16 @@ def load_fortunes_cb(bot, *args, **kwargs):
             abspath = os.path.join(root, file_)
             try:
                 fortune.make_fortune_data_file(abspath, True)
-                bot.fortune_files.append(abspath)
+                FORTUNE_FILES.append(abspath)
                 LOGGER.debug('Fortune file %s loaded.',
                              abspath)
             except ValueError as ex:
                 LOGGER.error('Fortune file %s failed to load: %s',
                              abspath, ex)
 
-    LOGGER.info('Fortune files loaded.')
-    return 'Done.'
+    LOGGER.info('%s fortune files loaded.', len(FORTUNE_FILES))
+    if message:
+        return 'Done.'
 
 @register_command(['8ball', 'is'])
 def eightball_cb(bot, *args, **kwargs):
@@ -71,7 +74,7 @@ def eightball_cb(bot, *args, **kwargs):
     '''
     try:
         return fortune.get_random_fortune(
-            bot.specials['eightball.spc'])
+            SPECIALS['eightball.spc'])
     except KeyError:
         LOGGER.error('Eightball specials not loaded!')
         return "Sorry, you're out of luck. (ERROR)"

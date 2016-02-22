@@ -3,7 +3,7 @@ Provides the plugin infrastructure and some helper functions for plugins.
 '''
 import os.path
 import importlib
-from .registry import COMMANDS, get_easy_logger
+from .registry import COMMANDS, get_easy_logger, STARTUP_FUNCTIONS, SHUTDOWN_FUNCTIONS
 
 
 LOGGER = get_easy_logger('moduleloader')
@@ -19,4 +19,9 @@ def load_plugins():
             if ffile.endswith('_plugin.py'):
                 modulename = ffile.strip('.py')
                 LOGGER.info('Initializing plugin %s', modulename)
-                importlib.import_module('.' + modulename, package=__name__)
+                try:
+                    importlib.import_module('.' + modulename, package=__name__)
+                    LOGGER.debug('%s loaded.', modulename)
+                except (NameError, SyntaxError) as ex:
+                    LOGGER.error('Module %s cannot be loaded!', modulename)
+                    LOGGER.error(ex)

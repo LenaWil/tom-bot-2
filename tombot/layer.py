@@ -3,14 +3,11 @@ import os
 import sys
 import logging
 import time
-import random
 import re
 import sqlite3
 import datetime
 import threading
-import wolframalpha
 import dateutil.parser
-import fortune
 
 from . import plugins
 from .helper_functions import extract_query, determine_sender
@@ -48,21 +45,6 @@ class TomBotLayer(YowInterfaceLayer):
             self.cursor = self.conn.cursor()
         except KeyError:
             logging.critical('Database could not be loaded!')
-
-        # Fortune and specials-setup:
-        self.fortune_files = []
-        self.specials = {}
-        self._load_fortunes()
-
-        # Wolfram Answer API setup
-        wolfram_key = config['Keys']['WolframAlpha']
-        wolfram_key = os.environ.get('WOLFRAM_APPID', wolfram_key)
-        if wolfram_key != 'changeme':
-            self.wolfram_client = wolframalpha.Client(wolfram_key)
-            logging.info(_('WolframAlpha command enabled.'))
-        else:
-            self.wolfram_client = None
-            logging.warning(_('WolframAlpha command disabled, no API key set.'))
 
         # Mentioning setup
         mention_regex = r'(?<!\w)@\s?(\w+)[ .:,]?'
@@ -107,6 +89,10 @@ class TomBotLayer(YowInterfaceLayer):
             }
         plugins.load_plugins()
         self.functions.update(plugins.COMMANDS)
+
+        # Execute startup hooks
+        for func in plugins.STARTUP_FUNCTIONS:
+            func(self)
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -203,39 +189,6 @@ class TomBotLayer(YowInterfaceLayer):
             entity.getId(), 'receipt', entity.getType(), entity.getFrom())
         self.toLower(ack)
 
-    def _load_fortunes(self):
-        ''' Loads fortune and specials files from their directories. '''
-        # pylint: disable=unused-variable
-        logging.debug(_('Loading specials files.'))
-        for root, dirs, files in os.walk('specials/'):
-            for file_ in files:
-                if not file_.endswith('.spc'):
-                    continue
-                logging.debug(_('Loading specials file {}'), file_)
-                try:
-                    filepath = os.path.join(root, file_)
-                    fortune.make_fortune_data_file(filepath, True)
-                    self.specials[file_] = filepath
-                    logging.debug(_('Specials file %s loaded.'), filepath)
-                except ValueError as ex:
-                    logging.error(_('Specials file %s failed to load: %s'), filepath, ex)
-
-        logging.info(_('Specials loaded.'))
-
-        for root, dirs, files in os.walk('fortunes/'):
-            for file_ in files:
-                if not file_.endswith('.txt'):
-                    continue
-                logging.debug(_('Loading fortune file %s'), file_)
-                try:
-                    filepath = os.path.join(root, file_)
-                    fortune.make_fortune_data_file(filepath, True)
-                    self.fortune_files.append(filepath)
-                    logging.debug(_('Fortune file %s loaded.'), filepath)
-                except ValueError as ex:
-                    logging.error(_('Fortune file %s failed to load: %s'), filepath, ex)
-        logging.info(_('Fortune files loaded.'))
-
     koekje = '\xf0\x9f\x8d\xaa'
 
     triggers = [
@@ -302,11 +255,6 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=unused-argument
         return self.koekje.decode('utf-8')
 
-    def cookie(self, message):
-        ''' Returns a cookie quote from specials. '''
-        # pylint: disable=unused-argument
-        return fortune.get_random_fortune(self.specials['cookie.spc']).decode('utf-8')
-
     def restartmsg(self, message):
         ''' Handle a restart command. '''
         logging.info('Restart message received from %s, content "%s"',
@@ -314,7 +262,7 @@ class TomBotLayer(YowInterfaceLayer):
         if not self.isadmin(message):
             logging.warning('Unauthorized shutdown attempt from %s',
                             determine_sender(message))
-            return self.userwarn()
+            return 'Not authorized.'
         self.stop(True)
 
     def stopmsg(self, message):
@@ -324,7 +272,7 @@ class TomBotLayer(YowInterfaceLayer):
         if not self.isadmin(message):
             logging.warning('Unauthorized shutdown attempt from %s',
                             determine_sender(message))
-            return self.userwarn()
+            return 'Not authorized.'
         self.stop()
 
     def stop(self, restart=False):
@@ -339,28 +287,6 @@ class TomBotLayer(YowInterfaceLayer):
         if restart:
             sys.exit(3)
         sys.exit(0)
-
-    def eightball(self, message):
-        ''' Generate a random response from the eightball special. '''
-        # pylint: disable=unused-argument
-        return fortune.get_random_fortune(self.specials['eightball.spc'])
-
-    def fortune(self, message):
-        ''' Choose a random quote from a random fortune file. '''
-        # pylint: disable=unused-argument
-        # Feature request: allow file specification, eg fortune discworld always picks discworld
-        try:
-            file_ = random.choice(self.fortune_files)
-            return fortune.get_random_fortune(file_)
-        except ValueError:
-            return _('Be the quote you want to see on a wall. \n Error message 20XX')
-
-    def userwarn(self):
-        ''' Send a random warning from the userwarn special. '''
-        try:
-            return fortune.get_random_fortune(self.specials['userwarn.spc'])
-        except KeyError:
-            return "Don't do that"
 
     # NewNicks
     def collect_users(self, message=None):
