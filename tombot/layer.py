@@ -79,10 +79,6 @@ class TomBotLayer(YowInterfaceLayer):
             'REGISTER'  : self.register_user,
             'FTIMEOUT'  : self.set_other_timeout,
             'TIMEOUT'   : self.set_own_timeout,
-            'MYNICKS'   : self.list_own_nicks,
-            'ADDNICK'   : self.add_own_nick,
-            'RMNICK'    : self.remove_own_nick,
-            'USER'      : self.list_other_nicks,
             'REMINDME'  : self.addreminder,
             'REMIND'    : self.addreminder,
             'BOTHER'    : self.anonsend,
@@ -389,103 +385,10 @@ class TomBotLayer(YowInterfaceLayer):
         except ValueError:
             return 'IT BROKE'
 
-    def list_own_nicks(self, message):
-        ''' List all nicknames linked to the sender. '''
-        if message.participant:
-            return
-        sender = determine_sender(message)
-        self.cursor.execute('SELECT id,primary_nick FROM users WHERE jid = ?',
-                            (sender,))
-        result = self.cursor.fetchone()
-        if not result:
-            return 'Wie ben jij, laat je registreren'
-        userid = result[0]
-        username = result[1]
-        self.cursor.execute('SELECT id,name FROM nicks WHERE jid = ?',
-                            (sender,))
-        results = self.cursor.fetchall()
-        if results:
-            reply = 'Nicknames for {} ({}/{}):'.format(username, sender, userid)
-            for row in results:
-                reply = reply + '\n' + '{} (id {})'.format(row[1], row[0])
-        else:
-            reply = 'No nicknames known for number {} (internal id {})'.format(
-                sender, userid)
-        return reply
-
-    def list_other_nicks(self, message):
-        ''' List all nicks of another user. '''
-        if message.participant:
-            return
-        cmd = extract_query(message)
-        if str.isdigit(cmd):
-            self.cursor.execute(
-                'SELECT id,jid,lastactive,primary_nick FROM users WHERE id = ?',
-                (cmd,))
-        else:
-            try:
-                userjid = self.nick_to_jid(cmd)
-                self.cursor.execute(
-                    'SELECT id,jid,lastactive,primary_nick FROM users WHERE jid = ?',
-                    (userjid,))
-            except KeyError:
-                return 'Ken ik niet'
-        result = self.cursor.fetchone()
-        if not result:
-            return 'ID onbekend' # nick resolution errors earlier
-        reply = 'Nicks for {} ({}/{}):\n'.format(result[3], result[1], result[0])
-        self.cursor.execute('SELECT name FROM nicks WHERE jid = ?',
-                            (result[1],))
-        results = self.cursor.fetchall()
-        for row in results:
-            reply = reply + row[0] + ' '
-        return reply
-
-    def add_own_nick(self, message):
-        ''' Link a new nickname to the sender. '''
-        if message.participant:
-            return
-        cmd = extract_query(message)
-        cmdl = cmd.split()
-        sender = determine_sender(message)
-        newnick = cmdl[0].lower()
-        if len(newnick) > 16:
-            return 'Te lang'
-        if str.isdigit(newnick):
-            return 'Pls'
-        try:
-            self.cursor.execute('INSERT INTO nicks (name, jid) VALUES (?,?)',
-                                (newnick, sender))
-            self.conn.commit()
-            return 'Ok.'
-        except sqlite3.IntegrityError:
-            return 'Bestaat al'
 
     def add_other_nick(self, message):
         ''' TODO: Link a nickname to another user (admin-only) '''
         pass
-
-    def remove_own_nick(self, message):
-        ''' Remove a nickname from the sender. Will fail if another user's nick is targeted. '''
-        if message.participant:
-            return
-        cmd = extract_query(message)
-        if str.isdigit(cmd):
-            self.cursor.execute('SELECT id,name,jid FROM nicks WHERE id = ?',
-                                (cmd,))
-        else:
-            self.cursor.execute('SELECT id,name,jid FROM nicks WHERE name = ?',
-                                (cmd,))
-        result = self.cursor.fetchone()
-        if result is None:
-            return 'Ken ik niet'
-        if result[2] != determine_sender(message):
-            return 'Dat ben jij niet'
-        self.cursor.execute('DELETE FROM nicks WHERE id = ?',
-                            (result[0],))
-        self.conn.commit()
-        logging.info('Nick %s removed.', cmd)
-        return 'Ok'
 
     def remove_other_nick(self, message):
         ''' TODO: Remove a nickname from any user. '''
