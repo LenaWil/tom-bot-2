@@ -77,8 +77,6 @@ class TomBotLayer(YowInterfaceLayer):
             'LOGDEBUG'  : self.logdebug,
             'GNS'       : self.get_nameless_seen,
             'REGISTER'  : self.register_user,
-            'FTIMEOUT'  : self.set_other_timeout,
-            'TIMEOUT'   : self.set_own_timeout,
             'REMINDME'  : self.addreminder,
             'REMIND'    : self.addreminder,
             'BOTHER'    : self.anonsend,
@@ -368,23 +366,6 @@ class TomBotLayer(YowInterfaceLayer):
         except ValueError:
             logging.error('Timeout set failure: %s', cmd)
             return 'IT BROKE'
-
-    def set_other_timeout(self, message):
-        ''' Update the timeout of any user. '''
-        if not self.isadmin(message):
-            return
-        try:
-            cmd = extract_query(message)
-            cmdl = cmd.split()
-            id_ = int(cmdl[0])
-            timeout = int(cmdl[1])
-            self.cursor.execute('UPDATE users SET timeout = ? WHERE id = ?',
-                                (timeout, id_))
-            self.conn.commit()
-            return 'Timeout for user updated to {}'.format(id_)
-        except ValueError:
-            return 'IT BROKE'
-
 
     def add_other_nick(self, message):
         ''' TODO: Link a nickname to another user (admin-only) '''

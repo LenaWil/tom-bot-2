@@ -125,7 +125,47 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
     LOGGER.info('Nick %s removed.', cmd)
     return 'Ok.'
 
+@register_command(['timeout', 'settimeout'])
+def set_own_timeout_cb(self, message):
+    ''' Update the mention timeout of the sender. '''
+    try:
+        cmd = extract_query(message)
+        timeout = int(cmd)
+        bot.cursor.execute('UPDATE users SET timeout = ? WHERE jid = ?',
+                            (timeout, determine_sender(message)))
+        bot.conn.commit()
+        return 'Ok'
+    except ValueError:
+        logging.error('Timeout set failure: %s', cmd)
+        return 'IT BROKE'
+
 # Admin
+@register_command('ftimeout')
+def set_other_timeout_cb(bot, message, *args, **kwargs):
+    '''
+    Update the timeout of any user.
+
+    Specify user by id or nick.
+    '''
+    if not bot.isadmin(message):
+        return
+    try:
+        cmd = extract_query(message)
+        cmdl = cmd.split()
+        if cmdl[0].isdigit():
+            id_ = int(cmdl[0])
+        else:
+            try:
+                id_ = nick_to_id(bot, cmdl[0])
+            except KeyError:
+                return 'Unknown nick.'
+        timeout = int(cmdl[1])
+        bot.cursor.execute('UPDATE users SET timeout = ? WHERE id = ?',
+                           (timeout, id_))
+        bot.conn.commit()
+        return 'Timeout for user updated to {}'.format(id_)
+    except ValueError:
+        return 'IT BROKE'
 
 # Lookup helpers
 def nick_to_jid(bot, name):
@@ -160,6 +200,22 @@ def jid_to_nick(bot, jid):
         return result[0]
 
     raise KeyError('Unknown jid {}'.format(jid))
+
+def nick_to_id(bot, nick):
+    '''
+    Map a nick to a userid.
+
+    Raises KeyError if id not known.
+    '''
+    jid = nick_to_jid(bot, nick)
+    query = 'SELECT id FROM users WHERE jid = ?'
+    bot.cursor.execute(query, (jid,))
+    result = bot.cursor.fetchone()
+    if result:
+        return result[0]
+
+    # This will never happen, nick_to_jid raises earlier.
+    raise KeyError('Unknown nick {}'.format(jid))
 
 # Authorization etc.
 def isadmin(bot, message):
