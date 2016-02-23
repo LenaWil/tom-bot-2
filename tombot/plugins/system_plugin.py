@@ -10,9 +10,7 @@ LOGGER = get_easy_logger('plugins.system')
 
 @register_command(['shutdown', 'halt'])
 def shutdown_cb(bot, message, *args, **kwargs):
-    '''
-    Shut down the bot.
-    '''
+    ''' Shut down the bot. '''
     LOGGER.info('Stop message received from %s, content "%s"',
                 message.getFrom(), message.getBody())
     if not isadmin(bot, message):
@@ -20,3 +18,14 @@ def shutdown_cb(bot, message, *args, **kwargs):
                        determine_sender(message))
         return 'Not authorized.'
     bot.stop()
+
+@register_command('restart')
+def restart_cb(bot, message, *args, **kwargs):
+    ''' Restart the bot. '''
+    LOGGER.info('Restart message received from %s, content "%s"',
+                message.getFrom(), message.getBody())
+    if not isadmin(bot, message):
+        LOGGER.warning('Unauthorized shutdown attempt from %s',
+                       determine_sender(message))
+        return 'Not authorized.'
+    bot.stop(True)

@@ -68,7 +68,6 @@ class TomBotLayer(YowInterfaceLayer):
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
             'FORCELOG'  : forcelog,
-            'RESTART'   : self.restartmsg,
             'PING'      : ping,
             'ADMINCHECK': self.isadmin,
             'DBSETUP'   : self.collect_users,
