@@ -5,6 +5,8 @@ import sys
 import logging
 import argparse
 from configobj import ConfigObj
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from validate import Validator
 from .layer import TomBotLayer
 # Yowsup
@@ -57,10 +59,17 @@ def main():
             logging.critical(error)
             logging.critical(generate_hint)
             sys.exit(1)
+
+        # Build scheduler, will be started in the bot's layer once connected
+        jobstores = {
+            'default' : SQLAlchemyJobStore(url='sqlite:///jobs.sqlite'),
+        }
+        scheduler = BackgroundScheduler(jobstores=jobstores)
+
         # Build Yowsup stack
         credentials = (config['Yowsup']['username'], config['Yowsup']['password'])
         layers = (
-            TomBotLayer(config),
+            TomBotLayer(config, scheduler),
             YowParallelLayer([
                 YowPresenceProtocolLayer, YowAuthenticationProtocolLayer,
                 YowMessagesProtocolLayer, YowIqProtocolLayer, YowReceiptProtocolLayer,

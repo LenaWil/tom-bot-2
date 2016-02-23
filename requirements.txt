@@ -3,6 +3,8 @@ wolframalpha==1.2
 pushbullet-cli==0.7.1
 pylint==1.5.3
 configobj==5.0.6
+APScheduler==3.0.5
+SQLAlchemy==1.0.11
 -e git://github.com/tgalal/yowsup.git#egg=yowsupgit
 -e git+https://github.com/spasticVerbalizer/fortune.git#egg=fortunegit
 -e git+https://github.com/shantanoo/python-duckduckgo.git#egg=python-duckduckgo

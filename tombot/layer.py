@@ -8,12 +8,16 @@ import re
 import urllib
 import sqlite3
 import datetime
+import threading
 import wolframalpha
+import dateutil.parser
 import fortune
 
 from .helper_functions import extract_query, determine_sender, ddg_respond
 from .helper_functions import forcelog, ping, unknown_command, diceroll
 from .doekoe import doekoe
+import tombot.rpc as rpc
+import tombot.datefinder as datefinder
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -35,9 +39,10 @@ from yowsup.layers.protocol_presence.protocolentities \
 class TomBotLayer(YowInterfaceLayer):
     ''' The tombot layer, a chatbot for WhatsApp. '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, config):
+    def __init__(self, config, scheduler):
         super(self.__class__, self).__init__()
         self.config = config
+        self.scheduler = scheduler
         logging.info('Current working directory: %s', os.getcwd())
         try:
             logging.info('Database location: %s',
@@ -69,6 +74,17 @@ class TomBotLayer(YowInterfaceLayer):
         # Group list holder
         self.known_groups = []
 
+        # Start rpc listener
+        host = 'localhost'
+        port = 10666
+        self.rpcserver = rpc.ThreadedTCPServer((host, port), rpc.ThreadedTCPRequestHandler, self)
+
+        server_thread = threading.Thread(target=self.rpcserver.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+
+        # Start the passed scheduler
+        self.scheduler.start()
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -252,6 +268,8 @@ class TomBotLayer(YowInterfaceLayer):
             'CASH'      : lambda x: doekoe(),
             'MUNNIE'    : lambda x: doekoe(),
             'MONEYS'    : lambda x: doekoe(),
+            'REMINDME'  : self.addreminder,
+            'REMIND'    : self.addreminder,
             'BOTHER'    : self.anonsend,
             }
         content = message.getBody()
@@ -338,6 +356,9 @@ class TomBotLayer(YowInterfaceLayer):
         self.set_offline()
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         self.config.write()
+        self.scheduler.shutdown()
+        self.rpcserver.shutdown()
+        self.rpcserver.server_close()
         if restart:
             sys.exit(3)
         sys.exit(0)
@@ -593,6 +614,40 @@ class TomBotLayer(YowInterfaceLayer):
         ''' TODO: Remove a nickname from any user. '''
         # pylint: disable=unused-argument
         pass
+
+    # Remindme and scheduling
+    def addreminder(self, message):
+        ''' (Hopefully) sends user a message at the given time '''
+        body = extract_query(message)
+        timespec = body.split()[0]
+        trytime = dateutil.parser.parse(body, parserinfo=datefinder.BPI, fuzzy=True)
+        delta = None
+        if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
+            try:
+                delta = datetime.datetime.now() + datefinder.find_timedelta(body)
+            except ValueError:
+                delta = None
+        elif timespec in datefinder.CLOCK_MARKERS:
+            try:
+                trytime = datefinder.find_first_time(body)
+            except ValueError:
+                logging.error('Cannot find time in "%s"', body)
+        if delta:
+            deadline = delta
+        else:
+            deadline = trytime
+        logging.debug('Parsed reminder command "%s"', body)
+        logging.info('Deadline %s from message "%s".',
+                     deadline, body)
+        reply = 'Reminder set for {}.'.format(deadline)
+        replymessage = TextMessageProtocolEntity(
+            to=determine_sender(message), body=reply)
+        self.toLower(replymessage)
+        self.scheduler.add_job(
+            rpc.remote_send, 'date',
+            [body, determine_sender(message)],
+            run_date=deadline)
+        return
 
     def nick_to_jid(self, name):
         '''
