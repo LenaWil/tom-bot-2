@@ -126,17 +126,17 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
     return 'Ok.'
 
 @register_command(['timeout', 'settimeout'])
-def set_own_timeout_cb(self, message):
+def set_own_timeout_cb(bot, message, *args, **kwargs):
     ''' Update the mention timeout of the sender. '''
     try:
         cmd = extract_query(message)
         timeout = int(cmd)
         bot.cursor.execute('UPDATE users SET timeout = ? WHERE jid = ?',
-                            (timeout, determine_sender(message)))
+                           (timeout, determine_sender(message)))
         bot.conn.commit()
         return 'Ok'
     except ValueError:
-        logging.error('Timeout set failure: %s', cmd)
+        LOGGER.error('Timeout set failure: %s', cmd)
         return 'IT BROKE'
 
 # Admin

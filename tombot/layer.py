@@ -354,19 +354,6 @@ class TomBotLayer(YowInterfaceLayer):
             logging.error(ex)
             return 'Error'
 
-    def set_own_timeout(self, message):
-        ''' Update the mention timeout of the sender. '''
-        try:
-            cmd = extract_query(message)
-            timeout = int(cmd)
-            self.cursor.execute('UPDATE users SET timeout = ? WHERE jid = ?',
-                                (timeout, determine_sender(message)))
-            self.conn.commit()
-            return 'Ok'
-        except ValueError:
-            logging.error('Timeout set failure: %s', cmd)
-            return 'IT BROKE'
-
     def add_other_nick(self, message):
         ''' TODO: Link a nickname to another user (admin-only) '''
         pass
