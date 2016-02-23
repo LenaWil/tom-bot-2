@@ -247,16 +247,6 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=unused-argument
         return self.koekje.decode('utf-8')
 
-    def restartmsg(self, message):
-        ''' Handle a restart command. '''
-        logging.info('Restart message received from %s, content "%s"',
-                     message.getFrom(), message.getBody())
-        if not self.isadmin(message):
-            logging.warning('Unauthorized shutdown attempt from %s',
-                            determine_sender(message))
-            return 'Not authorized.'
-        self.stop(True)
-
     def stop(self, restart=False):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
