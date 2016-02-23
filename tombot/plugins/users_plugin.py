@@ -127,7 +127,12 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
 
 @register_command(['timeout', 'settimeout'])
 def set_own_timeout_cb(bot, message, *args, **kwargs):
-    ''' Update the mention timeout of the sender. '''
+    '''
+    Update your mention timeout.
+
+    Your timeout is the amount of time (in seconds) that has to elapse before you receive @mentions.
+    A value of 0 means you receive all.
+    '''
     try:
         cmd = extract_query(message)
         timeout = int(cmd)
