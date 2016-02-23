@@ -522,14 +522,14 @@ class TomBotLayer(YowInterfaceLayer):
         self.cursor.execute('SELECT id,primary_nick FROM users WHERE jid = ?',
                             (sender,))
         result = self.cursor.fetchone()
-        if result is None:
-            return 'Wie ben jij'
+        if not result:
+            return 'Wie ben jij, laat je registreren'
         userid = result[0]
         username = result[1]
         self.cursor.execute('SELECT id,name FROM nicks WHERE jid = ?',
                             (sender,))
         results = self.cursor.fetchall()
-        if results is not None:
+        if results:
             reply = 'Nicknames for {} ({}/{}):'.format(username, sender, userid)
             for row in results:
                 reply = reply + '\n' + '{} (id {})'.format(row[1], row[0])
@@ -553,9 +553,11 @@ class TomBotLayer(YowInterfaceLayer):
                 self.cursor.execute(
                     'SELECT id,jid,lastactive,primary_nick FROM users WHERE jid = ?',
                     (userjid,))
-                result = self.cursor.fetchone()
             except KeyError:
                 return 'Ken ik niet'
+        result = self.cursor.fetchone()
+        if not result:
+            return 'ID onbekend' # nick resolution errors earlier
         reply = 'Nicks for {} ({}/{}):\n'.format(result[3], result[1], result[0])
         self.cursor.execute('SELECT name FROM nicks WHERE jid = ?',
                             (result[1],))
