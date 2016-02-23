@@ -68,7 +68,6 @@ class TomBotLayer(YowInterfaceLayer):
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
             'FORCELOG'  : forcelog,
-            'SHUTDOWN'  : self.stopmsg,
             'RESTART'   : self.restartmsg,
             'PING'      : ping,
             'ADMINCHECK': self.isadmin,
@@ -258,16 +257,6 @@ class TomBotLayer(YowInterfaceLayer):
                             determine_sender(message))
             return 'Not authorized.'
         self.stop(True)
-
-    def stopmsg(self, message):
-        ''' Handle a shutdown command. '''
-        logging.info('Stop message received from %s, content "%s"',
-                     message.getFrom(), message.getBody())
-        if not self.isadmin(message):
-            logging.warning('Unauthorized shutdown attempt from %s',
-                            determine_sender(message))
-            return 'Not authorized.'
-        self.stop()
 
     def stop(self, restart=False):
         ''' Shut down the bot. '''
