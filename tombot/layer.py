@@ -37,6 +37,7 @@ class TomBotLayer(YowInterfaceLayer):
             logging.info('Database location: %s',
                          config['Yowsup']['database'])
             self.conn = sqlite3.connect(config['Yowsup']['database'])
+            self.conn.text_factory = str
             self.cursor = self.conn.cursor()
         except KeyError:
             logging.critical('Database could not be loaded!')
