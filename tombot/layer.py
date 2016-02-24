@@ -57,9 +57,7 @@ class TomBotLayer(YowInterfaceLayer):
         # Start the passed scheduler
         self.scheduler.start()
 
-        self.functions = {  # Plugins :D
-            'HELP'      : self.help,
-            }
+        self.functions = {}
         plugins.load_plugins()
         self.functions.update(plugins.COMMANDS)
 
@@ -157,13 +155,8 @@ class TomBotLayer(YowInterfaceLayer):
             logging.error(ex)
         if response:
             reply_message = TextMessageProtocolEntity(
-                response.encode('utf-8'), to=message.getFrom())
+                response, to=message.getFrom())
             self.toLower(reply_message)
-
-    def help(self, message):
-        ''' TODO: give an overview of available commands. '''
-        # pylint: disable=unused-argument
-        return self.koekje.decode('utf-8')
 
     def stop(self, restart=False):
         ''' Shut down the bot. '''
