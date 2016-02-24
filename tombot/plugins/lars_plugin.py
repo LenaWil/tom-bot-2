@@ -13,4 +13,4 @@ def lars_cb(bot, message, *args, **kwargs):
     '''
     Send a (bad) genderless pickupline to sender.
     '''
-    return fortune.get_random_fortune(bot.specials['pickupline.spc'])
+    return fortune.get_random_fortune(SPECIALS['pickupline.spc'])
