@@ -4,15 +4,11 @@ import sys
 import logging
 import time
 import sqlite3
-import datetime
 import threading
-import dateutil.parser
 
 from . import plugins
-from .helper_functions import extract_query, determine_sender
 from .helper_functions import unknown_command
 import tombot.rpc as rpc
-import tombot.datefinder as datefinder
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -62,8 +58,6 @@ class TomBotLayer(YowInterfaceLayer):
 
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
-            'REMINDME'  : self.addreminder,
-            'REMIND'    : self.addreminder,
             }
         plugins.load_plugins()
         self.functions.update(plugins.COMMANDS)
@@ -191,40 +185,6 @@ class TomBotLayer(YowInterfaceLayer):
         ''' TODO: Remove a nickname from any user. '''
         # pylint: disable=unused-argument
         pass
-
-    # Remindme and scheduling
-    def addreminder(self, message):
-        ''' (Hopefully) sends user a message at the given time '''
-        body = extract_query(message)
-        timespec = body.split()[0]
-        trytime = dateutil.parser.parse(body, parserinfo=datefinder.BPI, fuzzy=True)
-        delta = None
-        if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
-            try:
-                delta = datetime.datetime.now() + datefinder.find_timedelta(body)
-            except ValueError:
-                delta = None
-        elif timespec in datefinder.CLOCK_MARKERS:
-            try:
-                trytime = datefinder.find_first_time(body)
-            except ValueError:
-                logging.error('Cannot find time in "%s"', body)
-        if delta:
-            deadline = delta
-        else:
-            deadline = trytime
-        logging.debug('Parsed reminder command "%s"', body)
-        logging.info('Deadline %s from message "%s".',
-                     deadline, body)
-        reply = 'Reminder set for {}.'.format(deadline)
-        replymessage = TextMessageProtocolEntity(
-            to=determine_sender(message), body=reply)
-        self.toLower(replymessage)
-        self.scheduler.add_job(
-            rpc.remote_send, 'date',
-            [body, determine_sender(message)],
-            run_date=deadline)
-        return
 
     # Helper functions
     def set_online(self, *_):
