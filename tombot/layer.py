@@ -10,7 +10,6 @@ import threading
 import dateutil.parser
 
 from . import plugins
-from .plugins.users_plugin import isadmin
 from .helper_functions import extract_query, determine_sender
 from .helper_functions import unknown_command
 import tombot.rpc as rpc
@@ -68,7 +67,6 @@ class TomBotLayer(YowInterfaceLayer):
 
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
-            'REGISTER'  : self.register_user,
             'REMINDME'  : self.addreminder,
             'REMIND'    : self.addreminder,
             'BOTHER'    : self.anonsend,
@@ -263,30 +261,6 @@ class TomBotLayer(YowInterfaceLayer):
         self.cursor.execute('UPDATE users SET lastactive = ?, message = ? WHERE jid = ?',
                             (currenttime, message.getBody().decode('utf-8'), author))
         self.conn.commit()
-
-    def register_user(self, message):
-        ''' Assign a primary nick to a user. '''
-        if not isadmin(self, message):
-            return
-        cmd = extract_query(message)
-        try:
-            cmdl = cmd.split()
-            id_ = int(cmdl[0])
-            name = cmdl[1]
-            self.cursor.execute('UPDATE users SET primary_nick = ? WHERE id = ?',
-                                (name, id_))
-            self.conn.commit()
-            logging.info(self.cursor.rowcount)
-            logging.info('User %s registered as %s.', id_, name)
-            return 'Ok'
-        except IndexError as ex:
-            logging.warning('Invalid message')
-            logging.warning(ex)
-            return 'Malformed command'
-        except sqlite3.IntegrityError as ex:
-            logging.error('Error during register')
-            logging.error(ex)
-            return 'Error'
 
     def add_other_nick(self, message):
         ''' TODO: Link a nickname to another user (admin-only) '''

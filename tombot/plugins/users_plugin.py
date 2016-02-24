@@ -211,6 +211,30 @@ def get_nameless_seen_cb(bot, message, *args, **kwargs):
         result += '{} ({}): {}\n'.format(user[0], user[2], user[1])
     return result
 
+@register_command('register')
+def register_user_cb(bot, message, *args, **kwargs):
+    ''' Assign a primary nick to a user. '''
+    if not isadmin(bot, message):
+        return
+    cmd = extract_query(message)
+    try:
+        cmdl = cmd.split()
+        id_ = int(cmdl[0])
+        name = cmdl[1]
+        bot.cursor.execute('UPDATE users SET primary_nick = ? WHERE id = ?',
+                           (name, id_))
+        bot.conn.commit()
+        LOGGER.info(bot.cursor.rowcount)
+        LOGGER.info('User %s registered as %s.', id_, name)
+        return 'Ok'
+    except IndexError as ex:
+        LOGGER.warning('Invalid message')
+        LOGGER.warning(ex)
+        return 'Malformed command'
+    except sqlite3.IntegrityError as ex:
+        LOGGER.error('Error during register')
+        LOGGER.error(ex)
+        return 'Error'
 # Lookup helpers
 def nick_to_jid(bot, name):
     '''
