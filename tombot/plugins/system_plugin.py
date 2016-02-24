@@ -15,7 +15,7 @@ def ping_cb(bot=None, message=None, *args, **kwargs):
     return 'Pong'
 
 @register_command('forcelog')
-def forcelog_cb(bot=None, message, *args, **kwargs):
+def forcelog_cb(bot, message, *args, **kwargs):
     ''' Write a message to the root logger. '''
     logging.info('Forcelog from %s: %s', message.getFrom(), message.getBody())
     return
