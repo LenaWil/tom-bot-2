@@ -56,7 +56,7 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
             (cmd,))
     else:
         try:
-            userjid = nick_to_jid(cmd)
+            userjid = nick_to_jid(bot, cmd)
             bot.cursor.execute(
                 'SELECT id,jid,lastactive,primary_nick FROM users WHERE jid = ?',
                 (userjid,))
