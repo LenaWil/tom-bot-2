@@ -1,2 +1,4 @@
+[MESSAGES CONTROL]
+disable=global-statement
 [VARIABLES]
 additional-builtins=_

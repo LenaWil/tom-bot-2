@@ -6,6 +6,7 @@ import logging
 
 
 COMMANDS = {}
+FUNCTIONS = {}  # similiar to commands, but grouped by category and used for help.
 STARTUP_FUNCTIONS = set()
 SHUTDOWN_FUNCTIONS = set()
 MESSAGE_HANDLERS = set()
@@ -27,18 +28,28 @@ class register_command(object):
 
     Adds a function to the command dict, either by name or list of names.
     Decorated functions must accept at least two arguments (bot, message).
+
+    If the function is not hidden, it is also added to the help dict.
     '''
-    def __init__(self, name, plugin=None, hidden=False):
+    def __init__(self, name, category=None, hidden=False):
         self.name = name
         self.hidden = hidden
-        self.plugin = plugin
+        self.category = category
 
     def __call__(self, func):
         if hasattr(self.name, '__iter__'):
             for item in self.name:
                 COMMANDS[item.upper()] = func
+            if not self.hidden:
+                if self.category not in FUNCTIONS:
+                    FUNCTIONS[self.category] = []
+                FUNCTIONS[self.category].append((self.name[0], self.name[1:], func))
         else:
             COMMANDS[self.name.upper()] = func
+            if not self.hidden:
+                if self.category not in FUNCTIONS:
+                    FUNCTIONS[self.category] = []
+                FUNCTIONS[self.category].append((self.name, None, func))
         LOGGER.debug('Registered command %s', self.name)
         return func
 

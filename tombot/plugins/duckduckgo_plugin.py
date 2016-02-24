@@ -8,7 +8,7 @@ from tombot.helper_functions import extract_query
 
 LOGGER = get_easy_logger('plugins.duckduckgo')
 
-@register_command(['duckduckgo', 'ddg', 'define'])
+@register_command(['duckduckgo', 'ddg', 'define'], 'info')
 def duckduckgo_cb(bot, message, *args, **kwargs):
     '''
     Answer query using DuckDuckGo.

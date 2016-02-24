@@ -11,7 +11,7 @@ LOGGER = get_easy_logger('plugins.fortune')
 FORTUNE_FILES = []
 SPECIALS = {}
 
-@register_command('fortune')
+@register_command('fortune', 'fortune')
 def fortune_cb(bot, *args, **kwargs):
     '''
     Return a random quote from one of the quote files.
@@ -24,7 +24,7 @@ def fortune_cb(bot, *args, **kwargs):
         return _('Be the quote you want to see on a wall.\n -- Error 20XX')
 
 @register_startup
-@register_command('loadfortunes', hidden=True)
+@register_command('loadfortunes', 'fortune', hidden=True)
 def load_fortunes_cb(bot, message=None, *args, **kwargs):
     '''
     (Re)load all fortune and specials files from their directories.
@@ -65,7 +65,7 @@ def load_fortunes_cb(bot, message=None, *args, **kwargs):
     if message:
         return 'Done.'
 
-@register_command(['8ball', 'is'])
+@register_command(['8ball', 'is'], 'fortune')
 def eightball_cb(bot, *args, **kwargs):
     '''
     Provide certainty in a turbulent world.

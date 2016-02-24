@@ -51,7 +51,6 @@ def wolframinit_cb(bot, *args, **kwargs):
     Requires either an environment variable or a config key Keys.WolframAlpha.
     The environment variable overrides the config key.
     '''
-    #pylint: disable=global-statement
     global CLIENT
     apikey = os.environ.get('WOLFRAM_APPID', None)
     if not apikey:

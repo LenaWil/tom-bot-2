@@ -77,7 +77,7 @@ def update_lastseen_cb(bot, message, *args, **kwargs):
                        (currenttime, message.getBody().decode('utf-8'), author))
     bot.conn.commit()
 
-@register_command(['timeout', 'settimeout'])
+@register_command(['timeout', 'settimeout'], 'mentions')
 def get_jid_timeout(self, jid):
     '''
     Retrieve a user's lastactive and timeout.
@@ -95,7 +95,7 @@ def get_jid_timeout(self, jid):
 
     raise KeyError('Unknown jid {}'.format(jid))
 
-@register_command(['timeout', 'settimeout'])
+@register_command(['timeout', 'settimeout'], 'mentions')
 def set_own_timeout_cb(bot, message, *args, **kwargs):
     '''
     Update your mention timeout.
@@ -115,7 +115,7 @@ def set_own_timeout_cb(bot, message, *args, **kwargs):
         return 'IT BROKE'
 
 # Admin
-@register_command('ftimeout')
+@register_command('ftimeout', 'mentions', hidden=True)
 def set_other_timeout_cb(bot, message, *args, **kwargs):
     '''
     Update the timeout of any user.

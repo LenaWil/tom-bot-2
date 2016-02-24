@@ -9,7 +9,7 @@ from .fortune_plugin import SPECIALS
 
 LOGGER = get_easy_logger('plugins.cookie')
 
-@register_command(['cookie', 'koekje', '\xf0\x9f\x8d\xaa'])
+@register_command(['cookie', 'koekje', '\xf0\x9f\x8d\xaa'], 'fortune')
 def cookie_cb(bot, *args, **kwargs):
     '''
     Return a cookie-related quote.

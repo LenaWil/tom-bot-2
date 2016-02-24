@@ -10,7 +10,7 @@ from .registry import register_command, get_easy_logger
 LOGGER = get_easy_logger('plugins.users')
 
 # User
-@register_command(['mynicks', 'lsnicks'])
+@register_command(['mynicks', 'lsnicks'], 'users')
 def list_own_nicks_cb(bot, message, *args, **kwargs):
     '''
     List all your nicks and their id's.
@@ -39,7 +39,7 @@ def list_own_nicks_cb(bot, message, *args, **kwargs):
             sender, userid)
     return reply
 
-@register_command(['user', 'whois'])
+@register_command(['user', 'whois'], 'users')
 def list_other_nicks_cb(bot, message, *args, **kwargs):
     '''
     List all nicks of another user.
@@ -73,7 +73,7 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
         reply = reply + row[0] + ' '
     return reply
 
-@register_command(['addnick', 'newnick'])
+@register_command(['addnick', 'newnick'], 'users')
 def add_own_nick_cb(bot, message, *args, **kwargs):
     '''
     Add a new nick to yourself.
@@ -99,7 +99,7 @@ def add_own_nick_cb(bot, message, *args, **kwargs):
     except sqlite3.IntegrityError:
         return 'Nick exists'
 
-@register_command(['rmnick', 'delnick'])
+@register_command(['rmnick', 'delnick'], 'users')
 def remove_own_nick_cb(bot, message, *args, **kwargs):
     '''
     Remove one of your nicks.
@@ -153,7 +153,7 @@ def collect_users_cb(bot, message=None, *args, **kwargs):
                 LOGGER.info('User present.')
         bot.conn.commit()
 
-@register_command('gns')
+@register_command('gns', 'users', hidden=True)
 def get_nameless_seen_cb(bot, message, *args, **kwargs):
     ''' List all jids which have been heard by the bot, but have no primary nick. '''
     if not isadmin(bot, message):
@@ -166,7 +166,7 @@ def get_nameless_seen_cb(bot, message, *args, **kwargs):
         result += '{} ({}): {}\n'.format(user[0], user[2], user[1])
     return result
 
-@register_command('register')
+@register_command('register', 'users', hidden=True)
 def register_user_cb(bot, message, *args, **kwargs):
     ''' Assign a primary nick to a user. '''
     if not isadmin(bot, message):
@@ -242,7 +242,7 @@ def nick_to_id(bot, nick):
     raise KeyError('Unknown nick {}'.format(jid))
 
 # Authorization etc.
-@register_command('isadmin')
+@register_command('isadmin', 'users')
 def isadmin_cb(bot, message, *args, **kwargs):
     ''' Check whether the sender has admin rights. '''
     if isadmin(bot, message):
