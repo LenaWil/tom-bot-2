@@ -143,7 +143,7 @@ class TomBotLayer(YowInterfaceLayer):
                 return
             text.remove(text[0])
         try:
-            response = self.functions[text[0]](message)
+            response = self.functions[text[0]](self, message)
         except IndexError:
             return
         except KeyError:
