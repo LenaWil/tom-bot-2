@@ -9,6 +9,11 @@ from tombot.helper_functions import determine_sender
 
 LOGGER = get_easy_logger('plugins.system')
 
+@register_command('ping')
+def ping_cb(bot=None, message=None, *args, **kwargs):
+    ''' Return 'pong' to indicate non-deadness. '''
+    return 'Pong'
+
 @register_command(['shutdown', 'halt'])
 def shutdown_cb(bot, message, *args, **kwargs):
     ''' Shut down the bot. '''

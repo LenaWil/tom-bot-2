@@ -37,13 +37,6 @@ def forcelog(message):
     logging.info('Forcelog from %s: %s', message.getFrom(), message.getBody())
     return
 
-# The following functions are used in react but do not use the bot's state,
-# or the content of the message.
-def ping(message=None):
-    ''' Return 'pong' to indicate non-deadness '''
-    # pylint: disable=unused-argument
-    return _('Pong')
-
 def unknown_command(message=None):
     ''' Return localized version of 'Unknown command!' '''
     # pylint: disable=unused-argument

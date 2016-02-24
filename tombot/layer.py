@@ -11,7 +11,7 @@ import dateutil.parser
 
 from . import plugins
 from .helper_functions import extract_query, determine_sender
-from .helper_functions import forcelog, ping, unknown_command
+from .helper_functions import forcelog, unknown_command
 import tombot.rpc as rpc
 import tombot.datefinder as datefinder
 from yowsup.layers.interface \
@@ -68,7 +68,6 @@ class TomBotLayer(YowInterfaceLayer):
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
             'FORCELOG'  : forcelog,
-            'PING'      : ping,
             'ADMINCHECK': self.isadmin,
             'DBSETUP'   : self.collect_users,
             'GNS'       : self.get_nameless_seen,
