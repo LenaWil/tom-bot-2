@@ -68,7 +68,6 @@ class TomBotLayer(YowInterfaceLayer):
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
             'ADMINCHECK': self.isadmin,
-            'DBSETUP'   : self.collect_users,
             'GNS'       : self.get_nameless_seen,
             'REGISTER'  : self.register_user,
             'REMINDME'  : self.addreminder,
@@ -257,32 +256,6 @@ class TomBotLayer(YowInterfaceLayer):
         sys.exit(0)
 
     # NewNicks
-    def collect_users(self, message=None):
-        ''' Detect all users and add them to the 'users' table, if not present. Disabled. '''
-        # pylint: disable=unused-argument
-        logging.info('Beginning user detection.')
-        if not self.known_groups:
-            logging.warning('Groups have not been detected, aborting.')
-            return
-        for group in self.known_groups:
-            for user in group.getParticipants().keys():
-                logging.info('User: %s', user)
-                self.cursor.execute('SELECT COUNT(*) FROM users WHERE jid = ?',
-                                    (user,))
-                result = self.cursor.fetchone()[0]
-                if result == 0:
-                    logging.info('User not yet present in database, adding...')
-                    currenttime = (datetime.datetime.now() -
-                                   datetime.datetime(1970, 1, 1)).total_seconds()
-                    default_timeout = 2 * 60 * 60 # 2 hours
-                    self.cursor.execute('''INSERT INTO USERS
-                        (jid, lastactive, timeout, admin) VALUES (?, ?, ?, ?)
-                    ''', (user, currenttime, default_timeout, False))
-                    logging.info('User added.')
-                else:
-                    logging.info('User present.')
-            self.conn.commit()
-
     def update_lastseen(self, message):
         ''' Update a user's last seen time in the database. '''
         author = determine_sender(message)

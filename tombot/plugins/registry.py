@@ -27,9 +27,10 @@ class register_command(object):
     Adds a function to the command dict, either by name or list of names.
     Decorated functions must accept at least two arguments (bot, message).
     '''
-    def __init__(self, name, hidden=False):
+    def __init__(self, name, plugin=None, hidden=False):
         self.name = name
         self.hidden = hidden
+        self.plugin = plugin
 
     def __call__(self, func):
         if hasattr(self.name, '__iter__'):

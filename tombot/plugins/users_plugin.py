@@ -1,6 +1,7 @@
 '''
 Provides user and nickname management.
 '''
+import datetime
 import sqlite3
 from tombot.helper_functions import determine_sender, extract_query
 from .registry import register_command, get_easy_logger
@@ -171,6 +172,31 @@ def set_other_timeout_cb(bot, message, *args, **kwargs):
         return 'Timeout for user updated to {}'.format(id_)
     except ValueError:
         return 'IT BROKE'
+
+def collect_users_cb(bot, message=None, *args, **kwargs):
+    ''' Detect all users and add them to the 'users' table, if not present. Disabled. '''
+    LOGGER.info('Beginning user detection.')
+    if not bot.known_groups:
+        LOGGER.warning('Groups have not been detected, aborting.')
+        return
+    for group in bot.known_groups:
+        for user in group.getParticipants().keys():
+            LOGGER.info('User: %s', user)
+            bot.cursor.execute('SELECT COUNT(*) FROM users WHERE jid = ?',
+                               (user,))
+            result = bot.cursor.fetchone()[0]
+            if result == 0:
+                LOGGER.info('User not yet present in database, adding...')
+                currenttime = (datetime.datetime.now() -
+                               datetime.datetime(1970, 1, 1)).total_seconds()
+                default_timeout = 2 * 60 * 60 # 2 hours
+                bot.cursor.execute('''INSERT INTO USERS
+                    (jid, lastactive, timeout, admin) VALUES (?, ?, ?, ?)
+                ''', (user, currenttime, default_timeout, False))
+                LOGGER.info('User added.')
+            else:
+                LOGGER.info('User present.')
+        bot.conn.commit()
 
 # Lookup helpers
 def nick_to_jid(bot, name):
