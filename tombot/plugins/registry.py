@@ -9,12 +9,13 @@ COMMANDS = {}
 STARTUP_FUNCTIONS = set()
 SHUTDOWN_FUNCTIONS = set()
 
-def get_easy_logger(name, level=logging.INFO):
+def get_easy_logger(name, level=None):
     '''
     Create a logger with a console handler and a basic format.
     '''
     result = logging.getLogger(name)
-    result.setLevel(level)
+    if level:
+        result.setLevel(level)
     return result
 
 LOGGER = get_easy_logger('pluginloader')
