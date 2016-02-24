@@ -177,15 +177,6 @@ class TomBotLayer(YowInterfaceLayer):
             sys.exit(3)
         sys.exit(0)
 
-    def add_other_nick(self, message):
-        ''' TODO: Link a nickname to another user (admin-only) '''
-        pass
-
-    def remove_other_nick(self, message):
-        ''' TODO: Remove a nickname from any user. '''
-        # pylint: disable=unused-argument
-        pass
-
     # Helper functions
     def set_online(self, *_):
         ''' Set presence as available '''
