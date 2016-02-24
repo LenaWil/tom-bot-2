@@ -14,6 +14,12 @@ def ping_cb(bot=None, message=None, *args, **kwargs):
     ''' Return 'pong' to indicate non-deadness. '''
     return 'Pong'
 
+@register_command('forcelog')
+def forcelog_cb(bot=None, message, *args, **kwargs):
+    ''' Write a message to the root logger. '''
+    logging.info('Forcelog from %s: %s', message.getFrom(), message.getBody())
+    return
+
 @register_command(['shutdown', 'halt'])
 def shutdown_cb(bot, message, *args, **kwargs):
     ''' Shut down the bot. '''

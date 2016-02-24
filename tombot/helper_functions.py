@@ -1,5 +1,4 @@
 ''' Some helper functions used in tombot which do not need the bot state. '''
-import logging
 
 
 def byteify(param):
@@ -32,11 +31,6 @@ def determine_sender(message):
     return message.getFrom()
 
 # The following functions are used in react, but do not need the bot's state.
-def forcelog(message):
-    ''' Write a message to the log. '''
-    logging.info('Forcelog from %s: %s', message.getFrom(), message.getBody())
-    return
-
 def unknown_command(message=None):
     ''' Return localized version of 'Unknown command!' '''
     # pylint: disable=unused-argument
