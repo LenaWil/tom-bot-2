@@ -153,7 +153,7 @@ def set_other_timeout_cb(bot, message, *args, **kwargs):
 
     Specify user by id or nick.
     '''
-    if not bot.isadmin(message):
+    if not isadmin(bot, message):
         return
     try:
         cmd = extract_query(message)
@@ -197,6 +197,19 @@ def collect_users_cb(bot, message=None, *args, **kwargs):
             else:
                 LOGGER.info('User present.')
         bot.conn.commit()
+
+@register_command('gns')
+def get_nameless_seen_cb(bot, message, *args, **kwargs):
+    ''' List all jids which have been heard by the bot, but have no primary nick. '''
+    if not isadmin(bot, message):
+        return
+    bot.cursor.execute(
+        'SELECT id,message,jid FROM users WHERE primary_nick IS NULL AND message IS NOT NULL')
+    results = bot.cursor.fetchall()
+    result = 'Non-registered but seen talking:\n'
+    for user in results:
+        result += '{} ({}): {}\n'.format(user[0], user[2], user[1])
+    return result
 
 # Lookup helpers
 def nick_to_jid(bot, name):
@@ -249,6 +262,13 @@ def nick_to_id(bot, nick):
     raise KeyError('Unknown nick {}'.format(jid))
 
 # Authorization etc.
+@register_command('isadmin')
+def isadmin_cb(bot, message, *args, **kwargs):
+    ''' Check whether the sender has admin rights. '''
+    if isadmin(bot, message):
+        return 'Yes!'
+    return 'No'
+
 def isadmin(bot, message):
     '''
     Determine whether or not a user can execute admin commands.

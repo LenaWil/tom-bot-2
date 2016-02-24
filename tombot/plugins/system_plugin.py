@@ -46,7 +46,7 @@ def restart_cb(bot, message, *args, **kwargs):
 def logdebug_cb(bot, message=None, *args, **kwargs):
     ''' Temporarily set the loglevel to debug. '''
     if message:
-        if not bot.isadmin(message):
+        if not isadmin(bot, message):
             return 'Not authorized.'
     logging.getLogger().setLevel(logging.DEBUG)
     return 'Ok.'
@@ -55,7 +55,7 @@ def logdebug_cb(bot, message=None, *args, **kwargs):
 def loginfo_cb(bot, message=None, *args, **kwargs):
     ''' Temporarily (re)set the loglevel to info. '''
     if message:
-        if not bot.isadmin(message):
+        if not isadmin(bot, message):
             return 'Not authorized.'
     logging.getLogger().setLevel(logging.INFO)
     return 'Ok.'

@@ -10,6 +10,7 @@ import threading
 import dateutil.parser
 
 from . import plugins
+from .plugins.users_plugin import isadmin
 from .helper_functions import extract_query, determine_sender
 from .helper_functions import unknown_command
 import tombot.rpc as rpc
@@ -67,8 +68,6 @@ class TomBotLayer(YowInterfaceLayer):
 
         self.functions = {  # Plugins :D
             'HELP'      : self.help,
-            'ADMINCHECK': self.isadmin,
-            'GNS'       : self.get_nameless_seen,
             'REGISTER'  : self.register_user,
             'REMINDME'  : self.addreminder,
             'REMIND'    : self.addreminder,
@@ -265,21 +264,9 @@ class TomBotLayer(YowInterfaceLayer):
                             (currenttime, message.getBody().decode('utf-8'), author))
         self.conn.commit()
 
-    def get_nameless_seen(self, message):
-        ''' List all jids which have been heard by the bot, but have no primary nick. '''
-        if not self.isadmin(message):
-            return
-        self.cursor.execute(
-            'SELECT id,message,jid FROM users WHERE primary_nick IS NULL AND message IS NOT NULL')
-        results = self.cursor.fetchall()
-        result = 'Non-registered but seen talking:\n'
-        for user in results:
-            result += '{} ({}): {}\n'.format(user[0], user[2], user[1])
-        return result
-
     def register_user(self, message):
         ''' Assign a primary nick to a user. '''
-        if not self.isadmin(message):
+        if not isadmin(self, message):
             return
         cmd = extract_query(message)
         try:
@@ -395,17 +382,6 @@ class TomBotLayer(YowInterfaceLayer):
         raise KeyError('Unknown jid {}'.format(jid))
 
     # Helper functions
-    def isadmin(self, message):
-        ''' Check whether the sender of a message is listed as an admin. '''
-        # Doen: Use admin field from database, instead of / alongside configfile.
-        sender = determine_sender(message)
-        try:
-            if self.config['Admins'][sender]:
-                return True
-        except KeyError:
-            return False
-        return False
-
     def set_online(self, *_):
         ''' Set presence as available '''
         logging.debug('Setting presence online.')
