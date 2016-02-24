@@ -90,6 +90,6 @@ def help_cb(bot, message, *args, **kwargs):
         return HELP_OVERVIEW
     else:
         try:
-            return pydoc.getdoc(COMMANDS[cmd])
+            return pydoc.getdoc(COMMANDS[cmd.upper()])
         except KeyError:
             return 'Sorry, that command is not known.'
