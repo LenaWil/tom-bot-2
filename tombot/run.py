@@ -28,6 +28,7 @@ from yowsup.layers import YowLayerEvent, YowParallelLayer
 from yowsup.layers.axolotl import YowAxolotlLayer
 from yowsup import env
 
+
 def main():
     ''' Console script to start the bot or output default config file. '''
     # Arguments
@@ -50,7 +51,8 @@ def main():
         loglevel = logging.DEBUG
     else:
         loglevel = logging.INFO
-    logging.basicConfig(level=loglevel)
+    logging.basicConfig(
+        level=loglevel, format='%(levelname)s - %(name)s - %(message)s')
     # Read configuration
     specpath = os.path.join(os.path.dirname(__file__), 'configspec.ini')
     config = ConfigObj(args.configfile, configspec=specpath)

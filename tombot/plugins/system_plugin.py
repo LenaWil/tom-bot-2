@@ -1,6 +1,7 @@
 '''
 Provides commands to globally modify the bot's behaviour.
 '''
+import logging
 from .users_plugin import isadmin
 from .registry import get_easy_logger, register_command
 from tombot.helper_functions import determine_sender
@@ -29,3 +30,21 @@ def restart_cb(bot, message, *args, **kwargs):
                        determine_sender(message))
         return 'Not authorized.'
     bot.stop(True)
+
+@register_command('logdebug')
+def logdebug_cb(bot, message=None, *args, **kwargs):
+    ''' Temporarily set the loglevel to debug. '''
+    if message:
+        if not bot.isadmin(message):
+            return 'Not authorized.'
+    logging.getLogger().setLevel(logging.DEBUG)
+    return 'Ok.'
+
+@register_command('loginfo')
+def loginfo_cb(bot, message=None, *args, **kwargs):
+    ''' Temporarily (re)set the loglevel to info. '''
+    if message:
+        if not bot.isadmin(message):
+            return 'Not authorized.'
+    logging.getLogger().setLevel(logging.INFO)
+    return 'Ok.'

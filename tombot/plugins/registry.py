@@ -14,14 +14,7 @@ def get_easy_logger(name, level=logging.INFO):
     Create a logger with a console handler and a basic format.
     '''
     result = logging.getLogger(name)
-    if not result.handlers:
-        result.setLevel(level)
-        formatter = logging.Formatter('%(levelname)s - %(name)s - %(message)s')
-        handler = logging.StreamHandler()
-        handler.setLevel(level)
-        handler.setFormatter(formatter)
-        result.addHandler(handler)
-        result.propagate = False
+    result.setLevel(level)
     return result
 
 LOGGER = get_easy_logger('pluginloader')

@@ -71,8 +71,6 @@ class TomBotLayer(YowInterfaceLayer):
             'PING'      : ping,
             'ADMINCHECK': self.isadmin,
             'DBSETUP'   : self.collect_users,
-            'LOGINFO'   : self.loginfo,
-            'LOGDEBUG'  : self.logdebug,
             'GNS'       : self.get_nameless_seen,
             'REGISTER'  : self.register_user,
             'REMINDME'  : self.addreminder,
@@ -424,19 +422,6 @@ class TomBotLayer(YowInterfaceLayer):
             return result
 
         raise KeyError('Unknown jid {}'.format(jid))
-
-    # Loglevel changes
-    def logdebug(self, message=None):
-        ''' Temporarily set the loglevel to debug. '''
-        if not self.isadmin(message):
-            return
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    def loginfo(self, message=None):
-        ''' Temporarily set the loglevel to info. '''
-        if not self.isadmin(message):
-            return
-        logging.getLogger().setLevel(logging.INFO)
 
     # Helper functions
     def isadmin(self, message):
