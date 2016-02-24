@@ -155,7 +155,7 @@ class TomBotLayer(YowInterfaceLayer):
             logging.error(ex)
         if response:
             reply_message = TextMessageProtocolEntity(
-                response.encode('utf-8'), to=message.getFrom())
+                response, to=message.getFrom())
             self.toLower(reply_message)
 
     def stop(self, restart=False):
