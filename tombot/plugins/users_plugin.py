@@ -126,53 +126,8 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
     LOGGER.info('Nick %s removed.', cmd)
     return 'Ok.'
 
-@register_command(['timeout', 'settimeout'])
-def set_own_timeout_cb(bot, message, *args, **kwargs):
-    '''
-    Update your mention timeout.
-
-    Your timeout is the amount of time (in seconds) that has to elapse before you receive @mentions.
-    A value of 0 means you receive all.
-    '''
-    try:
-        cmd = extract_query(message)
-        timeout = int(cmd)
-        bot.cursor.execute('UPDATE users SET timeout = ? WHERE jid = ?',
-                           (timeout, determine_sender(message)))
-        bot.conn.commit()
-        return 'Ok'
-    except ValueError:
-        LOGGER.error('Timeout set failure: %s', cmd)
-        return 'IT BROKE'
 
 # Admin
-@register_command('ftimeout')
-def set_other_timeout_cb(bot, message, *args, **kwargs):
-    '''
-    Update the timeout of any user.
-
-    Specify user by id or nick.
-    '''
-    if not isadmin(bot, message):
-        return
-    try:
-        cmd = extract_query(message)
-        cmdl = cmd.split()
-        if cmdl[0].isdigit():
-            id_ = int(cmdl[0])
-        else:
-            try:
-                id_ = nick_to_id(bot, cmdl[0])
-            except KeyError:
-                return 'Unknown nick.'
-        timeout = int(cmdl[1])
-        bot.cursor.execute('UPDATE users SET timeout = ? WHERE id = ?',
-                           (timeout, id_))
-        bot.conn.commit()
-        return 'Timeout for user updated to {}'.format(id_)
-    except ValueError:
-        return 'IT BROKE'
-
 def collect_users_cb(bot, message=None, *args, **kwargs):
     ''' Detect all users and add them to the 'users' table, if not present. Disabled. '''
     LOGGER.info('Beginning user detection.')
@@ -235,6 +190,7 @@ def register_user_cb(bot, message, *args, **kwargs):
         LOGGER.error('Error during register')
         LOGGER.error(ex)
         return 'Error'
+
 # Lookup helpers
 def nick_to_jid(bot, name):
     '''

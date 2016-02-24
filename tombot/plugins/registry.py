@@ -8,6 +8,7 @@ import logging
 COMMANDS = {}
 STARTUP_FUNCTIONS = set()
 SHUTDOWN_FUNCTIONS = set()
+MESSAGE_HANDLERS = set()
 
 def get_easy_logger(name, level=None):
     '''
@@ -63,6 +64,19 @@ class register_shutdown(object):
     def __init__(self, f):
         SHUTDOWN_FUNCTIONS.add(f)
         LOGGER.debug('Registered shutdown function %s', f)
+
+    def __call__(self):
+        pass
+
+class message_handler(object):
+    '''
+    Register a function to be run after receiving a message.
+
+    Decorated functions must accept at least two arguments, (bot, message).
+    '''
+    def __init__(self, f):
+        MESSAGE_HANDLERS.add(f)
+        LOGGER.debug('Registered message handler %s', f)
 
     def __call__(self):
         pass
