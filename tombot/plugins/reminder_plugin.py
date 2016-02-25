@@ -10,7 +10,7 @@ from yowsup.layers.protocol_messages.protocolentities \
         import TextMessageProtocolEntity
 
 from .registry import register_command, get_easy_logger
-from tombot.helper_functions import extract_query, determine_sender
+from tombot.helper_functions import extract_query, determine_sender, reply_directly
 import tombot.datefinder as datefinder
 import tombot.rpc as rpc
 
