@@ -1,4 +1,7 @@
 ''' Some helper functions used in tombot which do not need the bot state. '''
+from functools import wraps
+from yowsup.layers.protocol_messages.protocolentities \
+        import TextMessageProtocolEntity
 
 
 def byteify(param):
@@ -29,6 +32,23 @@ def determine_sender(message):
     if message.participant:
         return message.participant
     return message.getFrom()
+
+def reply_directly(func):
+    ''' Decorator to redirect messages to sender if used in group. '''
+    @wraps(func)
+    def wrapper(bot, message, *args, **kwargs): #pylint: disable=missing-docstring
+        result = func(bot, message, *args, **kwargs)
+        if not result:
+            return
+        if message.participant:
+            reply = TextMessageProtocolEntity(
+                body=result, to=determine_sender(message))
+            bot.toLower(reply)
+            return
+        else:
+            return result
+
+    return wrapper
 
 # The following functions are used in react, but do not need the bot's state.
 def unknown_command(message=None):
