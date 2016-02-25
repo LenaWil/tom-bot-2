@@ -11,14 +11,13 @@ LOGGER = get_easy_logger('plugins.users')
 
 # User
 @register_command(['mynicks', 'lsnicks'], 'users')
+@reply_directly
 def list_own_nicks_cb(bot, message, *args, **kwargs):
     '''
     List all your nicks and their id's.
 
     Nicks can be added using addnick, removed using rmnick.
     '''
-    if message.participant:
-        return # Gets annoying when used in groups
     sender = determine_sender(message)
     bot.cursor.execute('SELECT id,primary_nick FROM users WHERE jid = ?',
                        (sender,))
@@ -40,14 +39,13 @@ def list_own_nicks_cb(bot, message, *args, **kwargs):
     return reply
 
 @register_command(['user', 'whois'], 'users')
+@reply_directly
 def list_other_nicks_cb(bot, message, *args, **kwargs):
     '''
     List all nicks of another user.
 
     Specify user by id or nick.
     '''
-    if message.participant:
-        return
     cmd = extract_query(message)
 
     if str.isdigit(cmd):
@@ -74,14 +72,13 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
     return reply
 
 @register_command(['addnick', 'newnick'], 'users')
+@reply_directly
 def add_own_nick_cb(bot, message, *args, **kwargs):
     '''
     Add a new nick to yourself.
 
     Nicknames can be removed using 'rmnick'.
     '''
-    if message.participant:
-        return
     cmd = extract_query(message)
     cmdl = cmd.split()
     sender = determine_sender(message)
@@ -100,14 +97,13 @@ def add_own_nick_cb(bot, message, *args, **kwargs):
         return 'Nick exists'
 
 @register_command(['rmnick', 'delnick'], 'users')
+@reply_directly
 def remove_own_nick_cb(bot, message, *args, **kwargs):
     '''
     Remove one of your nicks.
 
     Specify a nick by id (see mynicks) or the nick itself.
     '''
-    if message.participant:
-        return
     cmd = extract_query(message)
     if str.isdigit(cmd):
         bot.cursor.execute('SELECT id,name,jid FROM nicks WHERE id = ?',
@@ -124,7 +120,7 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
                        (result[0],))
     bot.conn.commit()
     LOGGER.info('Nick %s removed.', cmd)
-    return 'Ok.'
+    return 'Nick {} removed.'.format(cmd)
 
 
 # Admin

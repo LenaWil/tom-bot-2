@@ -6,7 +6,7 @@ import pydoc
 from .users_plugin import isadmin
 from .registry import get_easy_logger, register_command, register_startup
 from .registry import FUNCTIONS, COMMANDS
-from tombot.helper_functions import determine_sender, extract_query
+from tombot.helper_functions import determine_sender, extract_query, reply_directly
 
 
 LOGGER = get_easy_logger('plugins.system')
@@ -79,6 +79,7 @@ def build_help_cb(bot, *args, **kwargs):
 
 
 @register_command(['help', '?'], 'system')
+@reply_directly
 def help_cb(bot, message, *args, **kwargs):
     '''
     Give moral and spiritual guidance in using this bot.
