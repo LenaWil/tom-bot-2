@@ -17,6 +17,7 @@ import tombot.rpc as rpc
 LOGGER = get_easy_logger('plugins.reminder')
 
 @register_command(['remind', 'remindme'])
+@reply_directly
 def addreminder_cb(bot, message, *args, **kwargs):
     ''' (Hopefully) sends user a message at the given time '''
     body = extract_query(message)
