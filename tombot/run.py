@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import argparse
+import code
 from configobj import ConfigObj
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -27,6 +28,7 @@ from yowsup.layers import YowLayerEvent, YowParallelLayer
 from yowsup.layers.axolotl import YowAxolotlLayer
 from yowsup import env
 
+
 def main():
     ''' Console script to start the bot or output default config file. '''
     # Arguments
@@ -39,6 +41,9 @@ def main():
         '-d', '--dry-run',
         help=_("don't actually start bot, but print config"),
         action='store_true')
+    parser.add_argument(
+        '-p', '--poke', action='store_true',
+        help=_("do everything except connecting (for testing)"))
     parser.add_argument('configfile', help=_("config file location"), nargs='?')
     args = parser.parse_args()
     # Set up logging
@@ -46,13 +51,14 @@ def main():
         loglevel = logging.DEBUG
     else:
         loglevel = logging.INFO
-    logging.basicConfig(level=loglevel)
+    logging.basicConfig(
+        level=loglevel, format='%(levelname)s - %(name)s - %(message)s')
     # Read configuration
     specpath = os.path.join(os.path.dirname(__file__), 'configspec.ini')
     config = ConfigObj(args.configfile, configspec=specpath)
-    val = Validator()
+
     if not args.dry_run:
-        config.validate(val)
+        config.validate(Validator())
         if not args.configfile:
             error = _("You must specify a config file!")
             generate_hint = _("Generate one using 'tombot -d > file.ini'.")
@@ -68,8 +74,9 @@ def main():
 
         # Build Yowsup stack
         credentials = (config['Yowsup']['username'], config['Yowsup']['password'])
+        bot = TomBotLayer(config, scheduler)
         layers = (
-            TomBotLayer(config, scheduler),
+            bot,
             YowParallelLayer([
                 YowPresenceProtocolLayer, YowAuthenticationProtocolLayer,
                 YowMessagesProtocolLayer, YowIqProtocolLayer, YowReceiptProtocolLayer,
@@ -85,14 +92,17 @@ def main():
         stack.setProp(YowCoderLayer.PROP_DOMAIN, YowConstants.DOMAIN)
         stack.setProp(YowCoderLayer.PROP_RESOURCE, env.CURRENT_ENV.getResource())
 
-        # Send connect signal
-        stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+        # Send connect signal if we aren't poking at the bot
+        if not args.poke:
+            stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
 
-        stack.loop(timeout=0.5, discrete=0.5)  #this is the program mainloop
+            stack.loop(timeout=0.5, discrete=0.5)  #this is the program mainloop
+        else:
+            code.interact(local=locals())
     else:
         # Output config file to stdout
         config.filename = None
-        config.validate(val, copy=True)
+        config.validate(Validator(), copy=True)
         output = config.write()
         for line in output:
             print(line)
