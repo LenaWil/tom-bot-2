@@ -3,7 +3,7 @@ Provides user and nickname management.
 '''
 import datetime
 import sqlite3
-from tombot.helper_functions import determine_sender, extract_query
+from tombot.helper_functions import determine_sender, extract_query, reply_directly
 from .registry import register_command, get_easy_logger
 
 
