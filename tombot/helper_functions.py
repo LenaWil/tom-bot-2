@@ -38,11 +38,13 @@ def reply_directly(func):
     @wraps(func)
     def wrapper(bot, message, *args, **kwargs): #pylint: disable=missing-docstring
         result = func(bot, message, *args, **kwargs)
+        if not result:
+            return
         if message.participant:
             reply = TextMessageProtocolEntity(
                 body=result, to=determine_sender(message))
             bot.toLower(reply)
-            return None
+            return
         else:
             return result
 
