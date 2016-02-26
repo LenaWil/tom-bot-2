@@ -42,7 +42,7 @@ def addreminder_cb(bot, message, *args, **kwargs):
     else:
         deadline = trytime
     if deadline < datetime.datetime.now():
-        logger.error('Parsing %s failed, invalid deadline')
+        LOGGER.error('Parsing %s failed, invalid deadline')
         return 'Sorry, limitations prevent parsing that kind of time.'
     LOGGER.debug('Parsed reminder command "%s"', body)
     LOGGER.info('Deadline %s from message "%s".',
