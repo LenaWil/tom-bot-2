@@ -22,7 +22,10 @@ def addreminder_cb(bot, message, *args, **kwargs):
     ''' (Hopefully) sends user a message at the given time '''
     body = extract_query(message)
     timespec = body.split()[0]
-    trytime = dateutil.parser.parse(body, parserinfo=datefinder.BPI, fuzzy=True)
+    try:
+        trytime = dateutil.parser.parse(body, parserinfo=datefinder.BPI, fuzzy=True)
+    except ValueError:
+        trytime = datetime.datetime(1970, 1, 1) # job is dropped if no other date is found
     delta = None
     if timespec in datefinder.DURATION_MARKERS or datefinder.STRICT_CLOCK_REGEX.match(timespec):
         try:
@@ -38,6 +41,9 @@ def addreminder_cb(bot, message, *args, **kwargs):
         deadline = delta
     else:
         deadline = trytime
+    if deadline < datetime.datetime.now():
+        LOGGER.error('Parsing %s failed, invalid deadline')
+        return 'Sorry, limitations prevent parsing that kind of time.'
     LOGGER.debug('Parsed reminder command "%s"', body)
     LOGGER.info('Deadline %s from message "%s".',
                 deadline, body)
