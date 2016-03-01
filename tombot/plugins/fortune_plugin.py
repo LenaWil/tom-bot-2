@@ -40,7 +40,7 @@ def load_fortunes_cb(bot, message=None, *args, **kwargs):
                 fortune.make_fortune_data_file(abspath, True)
                 SPECIALS[file_] = abspath
                 LOGGER.debug('Specials file %s loaded.', abspath)
-            except ValueError as ex:
+            except (TypeError, ValueError) as ex:
                 LOGGER.error('Specials file %s failed to load: %s',
                              abspath, ex)
     LOGGER.info('%s specials loaded.', len(SPECIALS))
