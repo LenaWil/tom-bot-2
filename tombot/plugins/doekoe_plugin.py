@@ -9,12 +9,17 @@ from __future__ import print_function
 from collections import namedtuple
 import datetime
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 import dateutil.rrule
 from dateutil.rrule import rrule
-from .registry import register_command
+from yowsup.layers.protocol_messages.protocolentities \
+        import TextMessageProtocolEntity
+
+from .registry import register_command, get_easy_logger, register_startup
 
 
+LOGGER = get_easy_logger('plugins.doekoe')
 Rule = namedtuple('rule', 'name rule relocator')
 
 def doekoe_neo(relative_to=datetime.datetime.today()):
@@ -25,24 +30,67 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
     '''
     result = ''
 
+    for item in next_occurrences(relative_to):
+        if item[1] == relative_to.date():
+            result += '{} is vandaag! ({})\n'.format(
+                item[0].name, item[1])
+        else:
+            delta = relativedelta(item[1], relative_to)
+            numdays = delta.days
+            word = 'dag' if numdays == 1 else 'dagen'
+            result += '{} komt over {} {}. ({})\n'.format(
+                item[0].name, numdays, word, item[1])
+
+    result += '\n\nAan deze informatie kunnen geen rechten worden ontleend.'
+    return result
+
+def next_occurrences(relative_to=datetime.datetime.today()):
+    '''
+    Calculate when the rules in RULES will next fire.
+    Returns a list of (Rule, datetime.date) tuples.
+    '''
+    result = []
     for rule in RULES:
         yesterday = relative_to - datetime.timedelta(days=1)
         naive_next = rule.rule.after(yesterday)
         actual_next = rule.relocator(naive_next)
-        print(actual_next)
-        print(relative_to)
-        if actual_next == relative_to.date():
-            result += '{} is vandaag! ({})\n'.format(
-                rule.name, actual_next)
-        else:
-            delta = relativedelta(actual_next, relative_to)
-            numdays = delta.days
-            word = 'dag' if numdays == 1 else 'dagen'
-            result += '{} komt over {} {}. ({})\n'.format(
-                rule.name, numdays, word, actual_next)
+        result.append((rule, actual_next))
 
-    result += '\n\nAan deze informatie kunnen geen rechten worden ontleend.'
     return result
+
+def which_today(relative_to=datetime.datetime.today()):
+    todays_events = [x[0].name for x in next_occurrences(relative_to) 
+                     if x[1] == date.today()]
+    return todays_events
+
+def midnight_announce_cb(bot, *args, **kwargs):
+    '''
+    Callback die rond middernacht eventuele doekoe aankondigt.
+    '''
+    LOGGER.info('Checking for doekoe_events to announce...')
+    todays_events = which_today()
+    if not todays_events:
+        LOGGER.info('No events to announce, returning.')
+        return
+
+    LOGGER.info('Announcing {}.', ', '.join(todays_events))
+    result = 'Vandaag {} {}!'.format(
+        'komt' if len(todays_events) == 1 else 'komen',
+        ', '.join(todays_events))
+    message = TextMessageProtocolEntity(
+        to=bot.config['Jids']['announce-group'],
+        body=result)
+    bot.toLower(message)
+
+@register_startup
+def add_midnight_announce_cb(bot, *args, **kwargs):
+    '''
+    Wrapper om de voornoemde callback te registreren.
+    '''
+    LOGGER.info('Registering doekoeannouncer.')
+    bot.scheduler.add_job(
+        midnight_announce_cb, args=(None,), *args, **kwargs)
+    LOGGER.info('Done.')
 
 def doekoe():
     '''
