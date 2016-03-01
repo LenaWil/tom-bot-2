@@ -28,8 +28,8 @@ def doekoe():
     if today.day == 8:
         res += 'Loon is vandaag!\n'
     elif today.day < 8:
-        res += 'Loon komt over {} {}.\n'.format(
-            8-today.day, 'dag' if 8-today.day < 2 else 'dagen')
+        res += 'Loon komt over {} {}. ({})\n'.format(
+            8-today.day, 'dag' if 8-today.day < 2 else 'dagen', loondag.isoformat())
     else:
         loondag = date(next_month.year, next_month.month, 8)
         delta = relativedelta(loondag, today)
@@ -56,7 +56,7 @@ def doekoe():
         stufidag = last_weekday_before(date(next_month.year, next_month.month, 24))
 
     if today == stufidag:
-        res += 'Stufi komt vandaag! ({})\n'.format(stufidag.isoformat())
+        res += 'Stufi is vandaag! ({})\n'.format(stufidag.isoformat())
     else:
         delta = relativedelta(stufidag, today)
         res += 'Stufi komt over {} {}. ({})\n'.format(
