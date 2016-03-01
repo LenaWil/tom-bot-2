@@ -6,10 +6,43 @@ Deze module bevat een commando om te berekenen wanneer verschillende uitbetaling
 plaatsvinden, zie de docstring van doekoe().
 '''
 from __future__ import print_function
+from collections import namedtuple
+import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import dateutil.rrule
+from dateutil.rrule import rrule
 from .registry import register_command
 
+
+Rule = namedtuple('rule', 'name rule relocator')
+
+def doekoe_neo(relative_to=datetime.datetime.today()):
+    '''
+    Bereken wanneer de uitbetalingen in RULES gebeuren.
+
+    Vraag uw specialist en/of gebruik uw ogen om de inhoud van RULES te achterhalen.
+    '''
+    result = ''
+
+    for rule in RULES:
+        yesterday = relative_to - datetime.timedelta(days=1)
+        naive_next = rule.rule.after(yesterday)
+        actual_next = rule.relocator(naive_next)
+        print(actual_next)
+        print(relative_to)
+        if actual_next == relative_to.date():
+            result += '{} is vandaag! ({})\n'.format(
+                rule.name, actual_next)
+        else:
+            delta = relativedelta(actual_next, relative_to)
+            numdays = delta.days
+            word = 'dag' if numdays == 1 else 'dagen'
+            result += '{} komt over {} {}. ({})\n'.format(
+                rule.name, numdays, word, actual_next)
+
+    result += '\n\nAan deze informatie kunnen geen rechten worden ontleend.'
+    return result
 
 def doekoe():
     '''
@@ -28,6 +61,7 @@ def doekoe():
     if today.day == 8:
         res += 'Loon is vandaag!\n'
     elif today.day < 8:
+        loondag = date(today.year, today.month, 8)
         res += 'Loon komt over {} {}. ({})\n'.format(
             8-today.day, 'dag' if 8-today.day < 2 else 'dagen', loondag.isoformat())
     else:
@@ -72,10 +106,14 @@ def doekoe_cb(*args, **kwargs):
 
     De huidige uitbetalingen zijn:
       - SAH Loon: de eerstvolgende 8e van een maand
+      - AH-loon: gekte, iets met vier weken
+      - De Fancy-loon: eerste werkdag na de volgende 21e
       - Zorgtoeslag: de eerste werkdag na de 20e
       - Studiefinanciëring: de laatste werkdag voor de 24e
+    Noch de makers, noch de bot zelf is of zijn verantwoordelijk, aansprakelijk \
+    of bedreigbaar in het waarschijnlijke geval dat de gegeven info eens niet klopt.
     '''
-    return doekoe()
+    return doekoe_neo()
 
 def first_weekday_after(arg):
     '''
@@ -83,6 +121,8 @@ def first_weekday_after(arg):
 
     If the argument is a Saturday or Sunday, the Monday after is returned.
     '''
+    if hasattr(arg, 'date'):
+        arg = arg.date()
     if arg.weekday() < 5:
         return arg
     return arg + relativedelta(days=7 - arg.weekday())
@@ -93,9 +133,33 @@ def last_weekday_before(arg):
 
     If the argument is a Saturday or Sunday, the preceding Friday is returned.
     '''
+    if hasattr(arg, 'date'):
+        arg = arg.date()
     if arg.weekday() < 5:
         return arg
     return arg + relativedelta(days=4 - arg.weekday())
 
+RULES = [
+    Rule('SaH-loon',
+         rrule(dateutil.rrule.MONTHLY, bymonthday=8),
+         lambda x: x.date()),
+    Rule('AH-loon',
+         rrule(dateutil.rrule.WEEKLY, interval=4,
+               dtstart=date(2016, 3, 7), cache=True),
+         first_weekday_after),
+    Rule('Defensie-loon',
+         rrule(dateutil.rrule.MONTHLY, bymonthday=21,
+               cache=True),
+         first_weekday_after),
+    Rule('Zorgtoeslag',
+         rrule(dateutil.rrule.MONTHLY, bymonthday=20,
+               cache=True),
+         first_weekday_after),
+    Rule('Stufi',
+         rrule(dateutil.rrule.MONTHLY, bymonthday=24,
+               cache=True),
+         last_weekday_before),
+    ]
+
 if __name__ == '__main__':
-    print(doekoe())
+    print(doekoe_neo())
