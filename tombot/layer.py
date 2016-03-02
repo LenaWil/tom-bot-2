@@ -30,6 +30,7 @@ class TomBotLayer(YowInterfaceLayer):
     # pylint: disable=too-many-instance-attributes
     def __init__(self, config, scheduler):
         super(self.__class__, self).__init__()
+        self.connected = False
         self.config = config
         self.scheduler = scheduler
         logging.info('Current working directory: %s', os.getcwd())
@@ -79,6 +80,7 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=invalid-name
         logging.debug('Event %s received', layerEvent.getName())
         if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
+            self.connected = False
             reason = layerEvent.getArg('reason')
             logging.warning(_('Connection lost: {}').format(reason))
             if reason == 'Connection Closed':
@@ -91,6 +93,7 @@ class TomBotLayer(YowInterfaceLayer):
                 return False
         elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
             logging.info('Connection established.')
+            self.connected = True
             self.set_online()
         return False
 
@@ -119,6 +122,13 @@ class TomBotLayer(YowInterfaceLayer):
         ack = OutgoingAckProtocolEntity(
             entity.getId(), 'receipt', entity.getType(), entity.getFrom())
         self.toLower(ack)
+
+    def toLower(self, entity):
+        ''' Intercept entites if not connected and warn user. '''
+        if not self.connected:
+            logging.error('Not connected, dropping entity!')
+            return
+        super(YowInterfaceLayer, self).toLower(entity)
 
     koekje = '\xf0\x9f\x8d\xaa'
 
@@ -161,12 +171,15 @@ class TomBotLayer(YowInterfaceLayer):
     def stop(self, restart=False):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
+        # Execute shutdown hooks
+        for func in plugins.SHUTDOWN_FUNCTIONS:
+            func(self)
         self.set_offline()
-        self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
-        self.config.write()
         self.scheduler.shutdown()
         self.rpcserver.shutdown()
         self.rpcserver.server_close()
+        if self.connected:
+            self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
         if restart:
             sys.exit(3)
         sys.exit(0)

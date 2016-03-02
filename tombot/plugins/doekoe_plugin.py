@@ -13,10 +13,10 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import dateutil.rrule
 from dateutil.rrule import rrule
-from yowsup.layers.protocol_messages.protocolentities \
-        import TextMessageProtocolEntity
+import tombot.rpc
+from apscheduler.jobstores.base import JobLookupError
 
-from .registry import register_command, get_easy_logger, register_startup
+from .registry import register_command, get_easy_logger, register_startup, register_shutdown
 
 
 LOGGER = get_easy_logger('plugins.doekoe')
@@ -63,9 +63,9 @@ def which_today(relative_to=datetime.datetime.today()):
                      if x[1] == date.today()]
     return todays_events
 
-def midnight_announce_cb(bot, *args, **kwargs):
+def midnight_announce_cb(recipient, *args, **kwargs):
     '''
-    Callback die rond middernacht eventuele doekoe aankondigt.
+    Callback die doekoe_events aankondigt bij announce-jid.
     '''
     LOGGER.info('Checking for doekoe_events to announce...')
     todays_events = which_today()
@@ -77,10 +77,8 @@ def midnight_announce_cb(bot, *args, **kwargs):
     result = 'Vandaag {} {}!'.format(
         'komt' if len(todays_events) == 1 else 'komen',
         ', '.join(todays_events))
-    message = TextMessageProtocolEntity(
-        to=bot.config['Jids']['announce-group'],
-        body=result)
-    bot.toLower(message)
+    tombot.rpc.remote_send(result, recipient)
+    LOGGER.info('Done.')
 
 @register_startup
 def add_midnight_announce_cb(bot, *args, **kwargs):
@@ -89,8 +87,20 @@ def add_midnight_announce_cb(bot, *args, **kwargs):
     '''
     LOGGER.info('Registering doekoeannouncer.')
     bot.scheduler.add_job(
-        midnight_announce_cb, args=(None,), *args, **kwargs)
-    LOGGER.info('Done.')
+        midnight_announce_cb, id='plugins.doekoe.midnight',
+        args=(bot.config['Jids']['announce-group'],), 
+        *args, **kwargs)
+
+@register_shutdown
+def rem_midnight_announce_cb(bot, *args, **kwargs):
+    '''
+    Verwijder announcer bij afsluiten om geen dubbele jobs te krijgen.
+    '''
+    LOGGER.info('Deregistering doekoeannouncer.')
+    try:
+        bot.scheduler.remove_job('plugins.doekoe.midnight')
+    except JobLookupError:
+        pass
 
 def doekoe():
     '''
