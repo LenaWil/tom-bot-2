@@ -73,7 +73,7 @@ def midnight_announce_cb(recipient, *args, **kwargs):
         LOGGER.info('No events to announce, returning.')
         return
 
-    LOGGER.info('Announcing {}.', ', '.join(todays_events))
+    LOGGER.info('Announcing %s.', ', '.join(todays_events))
     result = 'Vandaag {} {}!'.format(
         'komt' if len(todays_events) == 1 else 'komen',
         ', '.join(todays_events))
@@ -87,7 +87,10 @@ def add_midnight_announce_cb(bot, *args, **kwargs):
     '''
     LOGGER.info('Registering doekoeannouncer.')
     bot.scheduler.add_job(
-        midnight_announce_cb, id='plugins.doekoe.midnight',
+        midnight_announce_cb, 
+        'cron', hour=0, minute=0, second=30,
+        coalesce=True, misfire_grace_time=10,
+        id='plugins.doekoe.midnight',
         args=(bot.config['Jids']['announce-group'],), 
         *args, **kwargs)
 
@@ -217,6 +220,9 @@ RULES = [
          rrule(dateutil.rrule.MONTHLY, bymonthday=24,
                cache=True),
          last_weekday_before),
+    #Rule('Test',
+         #rrule(dateutil.rrule.DAILY, cache=True),
+             #lambda x: x.date()),
     ]
 
 if __name__ == '__main__':
