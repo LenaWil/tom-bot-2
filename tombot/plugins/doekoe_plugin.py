@@ -92,6 +92,7 @@ def add_midnight_announce_cb(bot, *args, **kwargs):
         coalesce=True, misfire_grace_time=10,
         id='plugins.doekoe.midnight',
         args=(bot.config['Jids']['announce-group'],), 
+        replace_existing=True,
         *args, **kwargs)
 
 @register_shutdown
