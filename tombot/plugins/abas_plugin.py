@@ -8,10 +8,10 @@ from tombot.rpc import remote_send
 
 LOGGER = get_easy_logger('plugins.abas')
 
-def announce_bday(recipient, name):
+def announce_bday(name, recipient):
     LOGGER.info('Congratulating %s', name)
     body = 'Gefeliciteerd, {}!'.format(name)
-    remote_send(recipient, body)
+    remote_send(body, recipient)
 
 @register_startup
 def abas_register_cb(bot, *args, **kwargs):
@@ -29,7 +29,7 @@ def abas_register_cb(bot, *args, **kwargs):
             'cron', month=person[1].month, day=person[1].day,
             hour=14, minute=50, second=0,
             id='abas.{}'.format(person[0]),
-            args=(bot.config['Jids']['announce-group'], person[0]),
+            args=(person[0], bot.config['Jids']['announce-group']),
             replace_existing=True, misfire_grace_time=86400
             )
 
