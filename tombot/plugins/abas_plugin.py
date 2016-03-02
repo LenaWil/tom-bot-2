@@ -16,7 +16,11 @@ def announce_bday(recipient, name):
 @register_startup
 def abas_register_cb(bot, *args, **kwargs):
     LOGGER.info('Registering ABAs.')
-    bot.cursor.execute('SELECT primary_nick,bday FROM users WHERE bday IS NOT NULL')
+    try:
+        bot.cursor.execute('SELECT primary_nick,bday FROM users WHERE bday IS NOT NULL')
+    except TypeError:
+        LOGGER.error('Invalid date found, fix your database!')
+        return
     results = bot.cursor.fetchall()
     for person in results:
         LOGGER.info('Scheduling ABA for %s', person[0])
