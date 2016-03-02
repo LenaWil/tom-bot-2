@@ -27,7 +27,7 @@ def abas_register_cb(bot, *args, **kwargs):
         bot.scheduler.add_job(
             announce_bday,
             'cron', month=person[1].month, day=person[1].day,
-            hour=14, minute=55, second=0,
+            hour=0, minute=0, second=45,
             id='abas.{}'.format(person[0]),
             args=(person[0], bot.config['Jids']['announce-group']),
             replace_existing=True, misfire_grace_time=86400
