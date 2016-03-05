@@ -51,3 +51,19 @@ I want to paint you green and spank you like a disobedient avocado.
 I want to paint you purple and spank you like a disobedient eggplant. 
 %
 I want to paint you red and spank you like a disobedient tomato.
+%
+Do you live around here often?
+%
+If you were a flower, I'd fuck you.
+%
+Are you dead, because you give me the necropheels.
+%
+Hey babe, wanna have really high expectations and then be really disappointed?
+%
+You'll do.
+%
+Hey... Get in the van.
+%
+I think I'm in love with you.
+%
+Do you have a last name? Because I want it.
