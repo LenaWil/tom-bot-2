@@ -9,12 +9,14 @@ from tombot.rpc import remote_send
 LOGGER = get_easy_logger('plugins.abas')
 
 def announce_bday(name, recipient):
+    ''' Send a congratulation for name to recipient. '''
     LOGGER.info('Congratulating %s', name)
     body = 'Gefeliciteerd, {}!'.format(name)
     remote_send(body, recipient)
 
 @register_startup
 def abas_register_cb(bot, *args, **kwargs):
+    ''' Add jobs to the scheduler for all birthdays. '''
     LOGGER.info('Registering ABAs.')
     try:
         bot.cursor.execute('SELECT primary_nick,bday FROM users WHERE bday IS NOT NULL')
@@ -34,7 +36,14 @@ def abas_register_cb(bot, *args, **kwargs):
             )
 
 @register_shutdown
-def abas_register_cb(bot, *args, **kwargs):
+def abas_deregister_cb(bot, *args, **kwargs):
+    '''
+    Remove jobs for birthday-announcing from scheduler.
+
+    This is necessary because we cannot predict whether the plugin will remain
+    enabled, and removing jobs manually or having jobs referring to non-existent
+    functions leads to Fun.
+    '''
     LOGGER.info('Deregistering ABAs.')
     bot.cursor.execute('SELECT primary_nick FROM users WHERE bday IS NOT NULL')
     results = bot.cursor.fetchall()

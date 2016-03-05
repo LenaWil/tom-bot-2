@@ -129,7 +129,7 @@ class TomBotLayer(YowInterfaceLayer):
         if not self.connected:
             logging.error('Not connected, dropping entity!')
             return
-        super(YowInterfaceLayer, self).toLower(entity)
+        super(self.__class__, self).toLower(entity)
 
     koekje = '\xf0\x9f\x8d\xaa'
 

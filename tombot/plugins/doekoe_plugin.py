@@ -13,9 +13,9 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import dateutil.rrule
 from dateutil.rrule import rrule
-import tombot.rpc
 from apscheduler.jobstores.base import JobLookupError
 
+import tombot.rpc
 from .registry import register_command, get_easy_logger, register_startup, register_shutdown
 
 
@@ -59,13 +59,14 @@ def next_occurrences(relative_to=datetime.datetime.today()):
     return result
 
 def which_today(relative_to=datetime.datetime.today()):
-    todays_events = [x[0].name for x in next_occurrences(relative_to) 
+    ''' List all events which should happen on the same date as relative_to. '''
+    todays_events = [x[0].name for x in next_occurrences(relative_to)
                      if x[1] == date.today()]
     return todays_events
 
 def midnight_announce_cb(recipient, *args, **kwargs):
     '''
-    Callback die doekoe_events aankondigt bij announce-jid.
+    Callback to announce if a doekoe_event is scheduled for the day.
     '''
     LOGGER.info('Checking for doekoe_events to announce...')
     todays_events = which_today()
@@ -87,11 +88,11 @@ def add_midnight_announce_cb(bot, *args, **kwargs):
     '''
     LOGGER.info('Registering doekoeannouncer.')
     bot.scheduler.add_job(
-        midnight_announce_cb, 
+        midnight_announce_cb,
         'cron', hour=0, minute=0, second=30,
         coalesce=True, misfire_grace_time=10,
         id='plugins.doekoe.midnight',
-        args=(bot.config['Jids']['announce-group'],), 
+        args=(bot.config['Jids']['announce-group'],),
         replace_existing=True,
         *args, **kwargs)
 
@@ -221,9 +222,6 @@ RULES = [
          rrule(dateutil.rrule.MONTHLY, bymonthday=24,
                cache=True),
          last_weekday_before),
-    #Rule('Test',
-         #rrule(dateutil.rrule.DAILY, cache=True),
-             #lambda x: x.date()),
     ]
 
 if __name__ == '__main__':
