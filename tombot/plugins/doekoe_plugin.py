@@ -35,7 +35,7 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
             result += '{} is vandaag! ({})\n'.format(
                 item[0].name, item[1])
         else:
-            delta = relativedelta(item[1], relative_to)
+            delta = relativedelta(item[1], relative_to.date())
             numdays = delta.days
             word = 'dag' if numdays == 1 else 'dagen'
             result += '{} komt over {} {}. ({})\n'.format(
