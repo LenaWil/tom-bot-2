@@ -34,7 +34,7 @@ def wolfram_cb(bot, message, *args, **kwargs):
         ChatstateProtocolEntity.STATE_PAUSED, message.getFrom())
     bot.toLower(entity)
     restext = _('Result from WolframAlpha:\n')
-    results = [p.text for p in result.pods
+    results = [p.text.encode('utf-8') for p in result.pods
                if p.title in ('Result', 'Value', 'Decimal approximation', 'Exact result')]
     if not results:
         return _('No result.')

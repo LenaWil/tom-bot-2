@@ -1,14 +1,16 @@
 ''' Contains functions that poke the bot to do something on its own '''
 import socket
 import SocketServer
-import logging
 from yowsup.layers.protocol_messages.protocolentities \
         import TextMessageProtocolEntity
+from tombot.plugins.registry import get_easy_logger
 
+
+LOGGER = get_easy_logger('rpc')
 
 def scheduler_ping():
     ''' Ping '''
-    logging.info('This is a scheduled ping!')
+    LOGGER.info('This is a scheduled ping!')
 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     ''' Allow the bot to be poked to do stuff '''
@@ -16,13 +18,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         data = self.request.recv(1024)
         args = data.split('\x1c')
         if args[0].upper() == 'LOG':
-            logging.info(args)
+            LOGGER.info(args)
         elif args[0].upper() == 'SEND':
-            logging.info('Sending %s to %s', args[2], args[1])
+            LOGGER.info('Sending %s to %s', args[2], args[1])
             msg = TextMessageProtocolEntity(
                 args[2], to=args[1])
             self.server.bot.toLower(msg)
-        logging.info(data)
+        LOGGER.info(data)
         response = "Ok."
         self.request.sendall(response)
 

@@ -9,12 +9,17 @@ from __future__ import print_function
 from collections import namedtuple
 import datetime
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 import dateutil.rrule
 from dateutil.rrule import rrule
-from .registry import register_command
+from apscheduler.jobstores.base import JobLookupError
+
+import tombot.rpc
+from .registry import register_command, get_easy_logger, register_startup, register_shutdown
 
 
+LOGGER = get_easy_logger('plugins.doekoe')
 Rule = namedtuple('rule', 'name rule relocator')
 
 def doekoe_neo(relative_to=datetime.datetime.today()):
@@ -25,24 +30,82 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
     '''
     result = ''
 
+    for item in next_occurrences(relative_to):
+        if item[1] == relative_to.date():
+            result += '{} is vandaag! ({})\n'.format(
+                item[0].name, item[1])
+        else:
+            delta = relativedelta(item[1], relative_to.date())
+            numdays = delta.days
+            word = 'dag' if numdays == 1 else 'dagen'
+            result += '{} komt over {} {}. ({})\n'.format(
+                item[0].name, numdays, word, item[1])
+
+    result += '\n\nAan deze informatie kunnen geen rechten worden ontleend.'
+    return result
+
+def next_occurrences(relative_to=datetime.datetime.today()):
+    '''
+    Calculate when the rules in RULES will next fire.
+    Returns a list of (Rule, datetime.date) tuples.
+    '''
+    result = []
     for rule in RULES:
         yesterday = relative_to - datetime.timedelta(days=1)
         naive_next = rule.rule.after(yesterday)
         actual_next = rule.relocator(naive_next)
-        print(actual_next)
-        print(relative_to)
-        if actual_next == relative_to.date():
-            result += '{} is vandaag! ({})\n'.format(
-                rule.name, actual_next)
-        else:
-            delta = relativedelta(actual_next, relative_to)
-            numdays = delta.days
-            word = 'dag' if numdays == 1 else 'dagen'
-            result += '{} komt over {} {}. ({})\n'.format(
-                rule.name, numdays, word, actual_next)
+        result.append((rule, actual_next))
 
-    result += '\n\nAan deze informatie kunnen geen rechten worden ontleend.'
     return result
+
+def which_today(relative_to=datetime.datetime.today()):
+    ''' List all events which should happen on the same date as relative_to. '''
+    todays_events = [x[0].name for x in next_occurrences(relative_to)
+                     if x[1] == date.today()]
+    return todays_events
+
+def midnight_announce_cb(recipient, *args, **kwargs):
+    '''
+    Callback to announce if a doekoe_event is scheduled for the day.
+    '''
+    LOGGER.info('Checking for doekoe_events to announce...')
+    todays_events = which_today()
+    if not todays_events:
+        LOGGER.info('No events to announce, returning.')
+        return
+
+    LOGGER.info('Announcing %s.', ', '.join(todays_events))
+    result = 'Vandaag {} {}!'.format(
+        'komt' if len(todays_events) == 1 else 'komen',
+        ', '.join(todays_events))
+    tombot.rpc.remote_send(result, recipient)
+    LOGGER.info('Done.')
+
+@register_startup
+def add_midnight_announce_cb(bot, *args, **kwargs):
+    '''
+    Wrapper om de voornoemde callback te registreren.
+    '''
+    LOGGER.info('Registering doekoeannouncer.')
+    bot.scheduler.add_job(
+        midnight_announce_cb,
+        'cron', hour=0, minute=0, second=30,
+        coalesce=True, misfire_grace_time=10,
+        id='plugins.doekoe.midnight',
+        args=(bot.config['Jids']['announce-group'],),
+        replace_existing=True,
+        *args, **kwargs)
+
+@register_shutdown
+def rem_midnight_announce_cb(bot, *args, **kwargs):
+    '''
+    Verwijder announcer bij afsluiten om geen dubbele jobs te krijgen.
+    '''
+    LOGGER.info('Deregistering doekoeannouncer.')
+    try:
+        bot.scheduler.remove_job('plugins.doekoe.midnight')
+    except JobLookupError:
+        pass
 
 def doekoe():
     '''
