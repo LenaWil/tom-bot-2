@@ -38,6 +38,7 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
                 item[0].name, item[1])
         else:
             delta = relativedelta(item[1], relative_to.date())
+            LOGGER.debug('Delta: %s (%s)', delta, delta.days)
             numdays = delta.days
             word = 'dag' if numdays == 1 else 'dagen'
             result += '{} komt over {} {}. ({})\n'.format(
