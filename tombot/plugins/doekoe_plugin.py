@@ -30,7 +30,9 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
     '''
     result = ''
 
+    LOGGER.debug('relative_to %s', relative_to)
     for item in next_occurrences(relative_to):
+        LOGGER.debug('%s %s', item[0], item[1])
         if item[1] == relative_to.date():
             result += '{} is vandaag! ({})\n'.format(
                 item[0].name, item[1])
