@@ -30,12 +30,17 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
     '''
     result = ''
 
+    relative_to.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    LOGGER.debug('relative_to %s', relative_to)
     for item in next_occurrences(relative_to):
+        LOGGER.debug('%s %s', item[0], item[1])
         if item[1] == relative_to.date():
             result += '{} is vandaag! ({})\n'.format(
                 item[0].name, item[1])
         else:
             delta = relativedelta(item[1], relative_to.date())
+            LOGGER.debug('Delta: %s (%s)', delta, delta.days)
             numdays = delta.days
             word = 'dag' if numdays == 1 else 'dagen'
             result += '{} komt over {} {}. ({})\n'.format(
