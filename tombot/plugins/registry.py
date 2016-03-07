@@ -2,7 +2,7 @@
 Contains functions to be used commonly in plugins.
 '''
 # pylint: disable=too-few-public-methods, invalid-name
-import logging
+from tombot.registry import get_easy_logger
 
 
 COMMANDS = {}
@@ -11,14 +11,6 @@ STARTUP_FUNCTIONS = set()
 SHUTDOWN_FUNCTIONS = set()
 MESSAGE_HANDLERS = set()
 
-def get_easy_logger(name, level=None):
-    '''
-    Create a logger with a console handler and a basic format.
-    '''
-    result = logging.getLogger(name)
-    if level:
-        result.setLevel(level)
-    return result
 
 LOGGER = get_easy_logger('pluginloader')
 
