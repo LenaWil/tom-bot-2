@@ -30,6 +30,8 @@ def doekoe_neo(relative_to=datetime.datetime.today()):
     '''
     result = ''
 
+    relative_to.replace(hour=0, minute=0, second=0, microsecond=0)
+
     LOGGER.debug('relative_to %s', relative_to)
     for item in next_occurrences(relative_to):
         LOGGER.debug('%s %s', item[0], item[1])
