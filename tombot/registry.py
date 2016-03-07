@@ -7,7 +7,6 @@ import types
 from collections import defaultdict
 
 
-LOGGER = get_easy_logger('registry')
 # Events
 
 # Event constants:
@@ -72,17 +71,9 @@ class RegisteringDecorator(object):
         if hasattr(self.name, '__iter__'):
             for item in self.name:
                 self.target_dict[item.upper()] = func
-            #if not self.hidden:
-                #if self.category not in FUNCTIONS:
-                    #FUNCTIONS[self.category] = []
-                #FUNCTIONS[self.category].append((self.name[0], self.name[1:], func))
         else:
             self.target_dict[self.name.upper()] = func
-            #if not self.hidden:
-                #if self.category not in FUNCTIONS:
-                    #FUNCTIONS[self.category] = []
-                #FUNCTIONS[self.category].append((self.name, None, func))
-        LOGGER.debug('Registered %s in %s', self.name)
+        LOGGER.debug('Registered %s', self.name)
         return func
 
 COMMAND_DICT = {}
@@ -127,3 +118,5 @@ def get_easy_logger(name, level=None):
     if level:
         result.setLevel(level)
     return result
+
+LOGGER = get_easy_logger('registry')

@@ -16,7 +16,7 @@ from dateutil.rrule import rrule
 from apscheduler.jobstores.base import JobLookupError
 
 import tombot.rpc
-from .registry import register_command, get_easy_logger, register_startup, register_shutdown
+from tombot.registry import Command, get_easy_logger, Subscribe, BOT_START, BOT_SHUTDOWN
 
 
 LOGGER = get_easy_logger('plugins.doekoe')
@@ -86,7 +86,7 @@ def midnight_announce_cb(recipient, *args, **kwargs):
     tombot.rpc.remote_send(result, recipient)
     LOGGER.info('Done.')
 
-@register_startup
+@Subscribe(BOT_START)
 def add_midnight_announce_cb(bot, *args, **kwargs):
     '''
     Wrapper om de voornoemde callback te registreren.
@@ -101,7 +101,7 @@ def add_midnight_announce_cb(bot, *args, **kwargs):
         replace_existing=True,
         *args, **kwargs)
 
-@register_shutdown
+@Subscribe(BOT_SHUTDOWN)
 def rem_midnight_announce_cb(bot, *args, **kwargs):
     '''
     Verwijder announcer bij afsluiten om geen dubbele jobs te krijgen.
@@ -167,7 +167,7 @@ def doekoe():
     res += '\nAan deze informatie kunnen geen rechten worden ontleend.'
     return res
 
-@register_command(['doekoe', 'duku', 'geld', 'gheldt', 'munnie', 'moneys', 'cash'])
+@Command(['doekoe', 'duku', 'geld', 'gheldt', 'munnie', 'moneys', 'cash'])
 def doekoe_cb(*args, **kwargs):
     '''
     Tel af tot wanneer je weer geld krijgt.

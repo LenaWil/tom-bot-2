@@ -2,13 +2,13 @@
 Provides command for answering queries using the DuckDuckGo API.
 '''
 import duckduckgo
-from .registry import register_command, get_easy_logger
+from tombot.registry import Command, get_easy_logger
 from tombot.helper_functions import extract_query
 
 
 LOGGER = get_easy_logger('plugins.duckduckgo')
 
-@register_command(['duckduckgo', 'ddg', 'define'], 'info')
+@Command(['duckduckgo', 'ddg', 'define'], 'info')
 def duckduckgo_cb(bot, message, *args, **kwargs):
     '''
     Answer query using DuckDuckGo.

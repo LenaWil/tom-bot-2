@@ -8,6 +8,7 @@ import threading
 
 from . import plugins
 from .helper_functions import unknown_command
+import tombot.registry as registry
 import tombot.rpc as rpc
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
@@ -61,11 +62,10 @@ class TomBotLayer(YowInterfaceLayer):
 
         self.functions = {}
         plugins.load_plugins()
-        self.functions.update(plugins.COMMANDS)
+        self.functions.update(registry.COMMAND_DICT)
 
         # Execute startup hooks
-        for func in plugins.STARTUP_FUNCTIONS:
-            func(self)
+        registry.fire_event(registry.BOT_START, self)
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -113,8 +113,7 @@ class TomBotLayer(YowInterfaceLayer):
         time.sleep(0.2)
         self.react(message)
 
-        for handler in plugins.MESSAGE_HANDLERS:
-            handler(self, message)
+        registry.fire_event(registry.BOT_MSG_RECEIVE, self, message)
 
     @ProtocolEntityCallback('receipt')
     def onReceipt(self, entity):
@@ -173,8 +172,7 @@ class TomBotLayer(YowInterfaceLayer):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
         # Execute shutdown hooks
-        for func in plugins.SHUTDOWN_FUNCTIONS:
-            func(self)
+        registry.fire_event(registry.BOT_SHUTDOWN, self)
         self.set_offline()
         self.scheduler.shutdown()
         self.rpcserver.shutdown()

@@ -4,14 +4,14 @@
 import os.path
 import random
 import fortune
-from .registry import register_command, get_easy_logger, register_startup
+from tombot.registry import Command, get_easy_logger, Subscribe, BOT_START
 
 
 LOGGER = get_easy_logger('plugins.fortune')
 FORTUNE_FILES = []
 SPECIALS = {}
 
-@register_command('fortune', 'fortune')
+@Command('fortune', 'fortune')
 def fortune_cb(bot, *args, **kwargs):
     '''
     Return a random quote from one of the quote files.
@@ -23,8 +23,8 @@ def fortune_cb(bot, *args, **kwargs):
         LOGGER.error('Fortune failed: %s', ex)
         return _('Be the quote you want to see on a wall.\n -- Error 20XX')
 
-@register_startup
-@register_command('loadfortunes', 'fortune', hidden=True)
+@Subscribe(BOT_START)
+@Command('loadfortunes', 'fortune', hidden=True)
 def load_fortunes_cb(bot, message=None, *args, **kwargs):
     '''
     (Re)load all fortune and specials files from their directories.
@@ -65,7 +65,7 @@ def load_fortunes_cb(bot, message=None, *args, **kwargs):
     if message:
         return 'Done.'
 
-@register_command(['8ball', 'is'], 'fortune')
+@Command(['8ball', 'is'], 'fortune')
 def eightball_cb(bot, *args, **kwargs):
     '''
     Provide certainty in a turbulent world.

@@ -3,7 +3,7 @@ import socket
 import SocketServer
 from yowsup.layers.protocol_messages.protocolentities \
         import TextMessageProtocolEntity
-from tombot.plugins.registry import get_easy_logger
+from .registry import get_easy_logger
 
 
 LOGGER = get_easy_logger('rpc')

@@ -4,13 +4,13 @@ Provides user and nickname management.
 import datetime
 import sqlite3
 from tombot.helper_functions import determine_sender, extract_query, reply_directly
-from .registry import register_command, get_easy_logger
+from tombot.registry import Command, get_easy_logger
 
 
 LOGGER = get_easy_logger('plugins.users')
 
 # User
-@register_command(['mynicks', 'lsnicks'], 'users')
+@Command(['mynicks', 'lsnicks'], 'users')
 @reply_directly
 def list_own_nicks_cb(bot, message, *args, **kwargs):
     '''
@@ -38,7 +38,7 @@ def list_own_nicks_cb(bot, message, *args, **kwargs):
             sender, userid)
     return reply
 
-@register_command(['user', 'whois'], 'users')
+@Command(['user', 'whois'], 'users')
 @reply_directly
 def list_other_nicks_cb(bot, message, *args, **kwargs):
     '''
@@ -71,7 +71,7 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
         reply = reply + row[0] + ' '
     return reply
 
-@register_command(['addnick', 'newnick'], 'users')
+@Command(['addnick', 'newnick'], 'users')
 @reply_directly
 def add_own_nick_cb(bot, message, *args, **kwargs):
     '''
@@ -96,7 +96,7 @@ def add_own_nick_cb(bot, message, *args, **kwargs):
     except sqlite3.IntegrityError:
         return 'Nick exists'
 
-@register_command(['rmnick', 'delnick'], 'users')
+@Command(['rmnick', 'delnick'], 'users')
 @reply_directly
 def remove_own_nick_cb(bot, message, *args, **kwargs):
     '''
@@ -149,7 +149,7 @@ def collect_users_cb(bot, message=None, *args, **kwargs):
                 LOGGER.info('User present.')
         bot.conn.commit()
 
-@register_command('gns', 'users', hidden=True)
+@Command('gns', 'users', hidden=True)
 def get_nameless_seen_cb(bot, message, *args, **kwargs):
     ''' List all jids which have been heard by the bot, but have no primary nick. '''
     if not isadmin(bot, message):
@@ -162,7 +162,7 @@ def get_nameless_seen_cb(bot, message, *args, **kwargs):
         result += '{} ({}): {}\n'.format(user[0], user[2], user[1])
     return result
 
-@register_command('register', 'users', hidden=True)
+@Command('register', 'users', hidden=True)
 def register_user_cb(bot, message, *args, **kwargs):
     ''' Assign a primary nick to a user. '''
     if not isadmin(bot, message):
@@ -238,7 +238,7 @@ def nick_to_id(bot, nick):
     raise KeyError('Unknown nick {}'.format(jid))
 
 # Authorization etc.
-@register_command('isadmin', 'users')
+@Command('isadmin', 'users')
 def isadmin_cb(bot, message, *args, **kwargs):
     ''' Check whether the sender has admin rights. '''
     if isadmin(bot, message):

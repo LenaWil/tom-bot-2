@@ -7,7 +7,7 @@ import urllib
 import wolframalpha
 
 from tombot.helper_functions import extract_query
-from .registry import register_command, get_easy_logger, register_startup
+from tombot.registry import Command, get_easy_logger, Subscribe, BOT_START
 from yowsup.layers.protocol_chatstate.protocolentities \
     import OutgoingChatstateProtocolEntity, ChatstateProtocolEntity
 
@@ -15,7 +15,7 @@ from yowsup.layers.protocol_chatstate.protocolentities \
 LOGGER = get_easy_logger('plugins.wolframalpha')
 CLIENT = None
 
-@register_command(['calc', 'calculate', 'bereken'])
+@Command(['calc', 'calculate', 'bereken'])
 def wolfram_cb(bot, message, *args, **kwargs):
     '''
     (Attempt to) answer query using the WolframAlpha API.
@@ -43,7 +43,7 @@ def wolfram_cb(bot, message, *args, **kwargs):
         urllib.quote(query).replace('%20', '+'))
     return restext
 
-@register_startup
+@Subscribe(BOT_START)
 def wolframinit_cb(bot, *args, **kwargs):
     '''
     Set up the Wolfram API client.
