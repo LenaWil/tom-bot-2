@@ -39,7 +39,8 @@ class TomBotLayer(YowInterfaceLayer):
             logging.info('Database location: %s',
                          config['Yowsup']['database'])
             self.conn = sqlite3.connect(config['Yowsup']['database'],
-                                        detect_types=sqlite3.PARSE_DECLTYPES)
+                                        detect_types=sqlite3.PARSE_DECLTYPES,
+                                        check_same_thread=False)
             self.conn.text_factory = str
             self.cursor = self.conn.cursor()
         except KeyError:
