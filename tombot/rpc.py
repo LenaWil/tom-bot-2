@@ -66,6 +66,7 @@ def rpc_call(command, *args):
     LOGGER.debug(cmd)
     sock.sendall(cmd)
     resp = sock.recv(1024)
+    sock.close()
     LOGGER.debug(resp)
     return resp
 
