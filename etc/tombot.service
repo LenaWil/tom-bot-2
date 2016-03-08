@@ -1,0 +1,17 @@
+[Unit]
+Description=Tombot Whatsapp Bot
+After=network.target
+OnFailure=status-email-user@%n.service
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+ExecStart=/home/pi/start-tombot.sh
+SuccessExitStatus=3
+RestartForceExitStatus=3
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
