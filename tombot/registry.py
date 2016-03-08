@@ -104,8 +104,8 @@ class Command(RegisteringDecorator):
 def safe_call(target_dict, key, *args, **kwargs):
     ''' Wrapper to call a function and not crash if it excepts. '''
     try:
-        target_dict[key.upper()](*args, **kwargs)
-    except NameError:
+        return target_dict[key.upper()](*args, **kwargs)
+    except (NameError, TypeError):
         raise
     except Exception as ex: #pylint: disable=broad-except
         del target_dict[key]
