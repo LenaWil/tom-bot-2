@@ -24,6 +24,7 @@ from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_presence.protocolentities \
         import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
+from apscheduler.schedulers import SchedulerNotRunningError
 
 
 class TomBotLayer(YowInterfaceLayer):
@@ -82,7 +83,6 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=invalid-name
         logging.debug('Event %s received', layerEvent.getName())
         if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
-            self.connected = False
             reason = layerEvent.getArg('reason')
             logging.warning(_('Connection lost: {}').format(reason))
             registry.fire_event(registry.BOT_DISCONNECTED, self)
@@ -90,10 +90,12 @@ class TomBotLayer(YowInterfaceLayer):
                 time.sleep(.5)
                 logging.warning(_('Reconnecting'))
                 self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+                self.connected = False
                 return True
             else:
                 logging.error('Fatal disconnect: %s', reason)
-                self.stop()
+                if self.connected and reason != 'Requested':
+                    self.stop()
                 return False
         elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
             logging.info('Connection established.')
@@ -178,7 +180,10 @@ class TomBotLayer(YowInterfaceLayer):
         # Execute shutdown hooks
         registry.fire_event(registry.BOT_SHUTDOWN, self)
         self.set_offline()
-        self.scheduler.shutdown()
+        try:
+            self.scheduler.shutdown()
+        except SchedulerNotRunningError:
+            pass
         self.rpcserver.shutdown()
         self.rpcserver.server_close()
         if self.connected:
