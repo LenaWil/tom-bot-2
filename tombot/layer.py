@@ -84,18 +84,21 @@ class TomBotLayer(YowInterfaceLayer):
             self.connected = False
             reason = layerEvent.getArg('reason')
             logging.warning(_('Connection lost: {}').format(reason))
+            registry.fire_event(registry.BOT_DISCONNECTED, self)
             if reason == 'Connection Closed':
                 time.sleep(.5)
                 logging.warning(_('Reconnecting'))
                 self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
                 return True
             else:
+                logging.error('Fatal disconnect: %s', reason)
                 self.stop()
                 return False
         elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
             logging.info('Connection established.')
             self.connected = True
             self.set_online()
+            registry.fire_event(registry.BOT_CONNECTED, self)
         return False
 
     @ProtocolEntityCallback('message')
