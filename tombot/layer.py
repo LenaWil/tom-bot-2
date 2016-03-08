@@ -126,7 +126,7 @@ class TomBotLayer(YowInterfaceLayer):
     def toLower(self, entity):
         ''' Intercept entites if not connected and warn user. '''
         if not self.connected:
-            logging.error('Not connected, dropping entity!')
+            logging.warning('Not connected, dropping entity!')
             return
         super(self.__class__, self).toLower(entity)
 

@@ -15,7 +15,7 @@ def scheduler_ping():
     LOGGER.info('This is a scheduled ping!')
 
 @RPCCommand('ping')
-def rpc_ping_cb(*args):
+def rpc_ping_cb(bot, *args):
     ''' Ping '''
     return 'Pong: {}'.format(' '.join(args))
 
@@ -41,18 +41,18 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
             self, server_address, RequestHandlerClass, bind_and_activate)
 
 @RPCCommand('log')
-def rpc_log_cb(*args):
+def rpc_log_cb(bot, *args):
     ''' Send all arguments to the log. '''
     LOGGER.info('Forcelog: %s', ' '.join(args))
     return RPC_OK
 
 @RPCCommand('send')
-def rpc_send_cb(self, recipient, body, *args):
+def rpc_send_cb(handler, recipient, body, *args):
     ''' Send a message to the bot ('''
     LOGGER.info('Sending %s to %s', body, recipient)
     msg = TextMessageProtocolEntity(
         body, to=recipient)
-    self.server.bot.toLower(msg)
+    handler.server.bot.toLower(msg)
     return RPC_OK
 
 def rpc_call(command, *args):
