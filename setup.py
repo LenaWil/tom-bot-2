@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
         name='tombot',
-        version='0.1',
+        version='0.2',
         description='A chatbot for WhatsApp',
         classifiers =[
             'Development Status :: 3 - Alpha',
@@ -24,7 +24,9 @@ setup(
             ],
         entry_points = {
             'console_scripts' : [
-                'tombot-run=tombot.run:main'
+                'tombot-run=tombot.run:main',
+                'tombot-stop=tombot.rpc:remote_shutdown',
+                'tombot-restart=tombot.rpc:remote_restart'
                 ],
             },
         zip_safe=False

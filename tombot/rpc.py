@@ -98,3 +98,9 @@ def remote_send(body, recipient):
     resp = rpc_call('SEND', recipient, body)
     if resp != RPC_OK:
         raise ValueError('Something happened. ({})'.format(resp))
+
+def remote_shutdown():
+    rpc_call('shutdown')
+
+def remote_restart():
+    rpc_call('restart')
