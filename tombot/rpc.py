@@ -100,7 +100,9 @@ def remote_send(body, recipient):
         raise ValueError('Something happened. ({})'.format(resp))
 
 def remote_shutdown():
+    ''' Convenience function to kill a running bot. '''
     rpc_call('shutdown')
 
 def remote_restart():
+    ''' Convenience function to restart a running bot. '''
     rpc_call('restart')
