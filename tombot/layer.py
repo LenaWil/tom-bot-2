@@ -105,7 +105,7 @@ class TomBotLayer(YowInterfaceLayer):
         return False
 
     @ProtocolEntityCallback('message')
-    def onMessageReceived(self, message):
+    def onMessage(self, message):
         ''' Handles incoming messages and responds to them if needed. '''
         # pylint: disable=invalid-name
         logging.debug('Message %s from %s received, content: %s',
