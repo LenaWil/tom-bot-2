@@ -3,8 +3,7 @@ Provides the plugin infrastructure and some helper functions for plugins.
 '''
 import os.path
 import importlib
-from .registry import COMMANDS, STARTUP_FUNCTIONS, SHUTDOWN_FUNCTIONS, MESSAGE_HANDLERS
-from .registry import get_easy_logger
+from tombot.registry import get_easy_logger
 
 
 LOGGER = get_easy_logger('moduleloader')

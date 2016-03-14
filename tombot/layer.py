@@ -8,6 +8,7 @@ import threading
 
 from . import plugins
 from .helper_functions import unknown_command
+import tombot.registry as registry
 import tombot.rpc as rpc
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
@@ -23,6 +24,7 @@ from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_presence.protocolentities \
         import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
+from apscheduler.schedulers import SchedulerNotRunningError
 
 
 class TomBotLayer(YowInterfaceLayer):
@@ -38,7 +40,8 @@ class TomBotLayer(YowInterfaceLayer):
             logging.info('Database location: %s',
                          config['Yowsup']['database'])
             self.conn = sqlite3.connect(config['Yowsup']['database'],
-                                        detect_types=sqlite3.PARSE_DECLTYPES)
+                                        detect_types=sqlite3.PARSE_DECLTYPES,
+                                        check_same_thread=False)
             self.conn.text_factory = str
             self.cursor = self.conn.cursor()
         except KeyError:
@@ -61,11 +64,10 @@ class TomBotLayer(YowInterfaceLayer):
 
         self.functions = {}
         plugins.load_plugins()
-        self.functions.update(plugins.COMMANDS)
+        self.functions.update(registry.COMMAND_DICT)
 
         # Execute startup hooks
-        for func in plugins.STARTUP_FUNCTIONS:
-            func(self)
+        registry.fire_event(registry.BOT_START, self)
 
     @ProtocolEntityCallback('iq')
     def onIq(self, entity):
@@ -81,25 +83,29 @@ class TomBotLayer(YowInterfaceLayer):
         # pylint: disable=invalid-name
         logging.debug('Event %s received', layerEvent.getName())
         if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
-            self.connected = False
             reason = layerEvent.getArg('reason')
             logging.warning(_('Connection lost: {}').format(reason))
+            registry.fire_event(registry.BOT_DISCONNECTED, self)
             if reason == 'Connection Closed':
                 time.sleep(.5)
                 logging.warning(_('Reconnecting'))
                 self.getStack().broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+                self.connected = False
                 return True
             else:
-                self.stop()
+                logging.error('Fatal disconnect: %s', reason)
+                if self.connected and reason != 'Requested':
+                    self.stop()
                 return False
         elif layerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
             logging.info('Connection established.')
             self.connected = True
             self.set_online()
+            registry.fire_event(registry.BOT_CONNECTED, self)
         return False
 
     @ProtocolEntityCallback('message')
-    def onMessageReceived(self, message):
+    def onMessage(self, message):
         ''' Handles incoming messages and responds to them if needed. '''
         # pylint: disable=invalid-name
         logging.debug('Message %s from %s received, content: %s',
@@ -113,8 +119,7 @@ class TomBotLayer(YowInterfaceLayer):
         time.sleep(0.2)
         self.react(message)
 
-        for handler in plugins.MESSAGE_HANDLERS:
-            handler(self, message)
+        registry.fire_event(registry.BOT_MSG_RECEIVE, self, message)
 
     @ProtocolEntityCallback('receipt')
     def onReceipt(self, entity):
@@ -127,7 +132,7 @@ class TomBotLayer(YowInterfaceLayer):
     def toLower(self, entity):
         ''' Intercept entites if not connected and warn user. '''
         if not self.connected:
-            logging.error('Not connected, dropping entity!')
+            logging.warning('Not connected, dropping entity!')
             return
         super(self.__class__, self).toLower(entity)
 
@@ -173,10 +178,12 @@ class TomBotLayer(YowInterfaceLayer):
         ''' Shut down the bot. '''
         logging.info('Shutting down via stop method.')
         # Execute shutdown hooks
-        for func in plugins.SHUTDOWN_FUNCTIONS:
-            func(self)
+        registry.fire_event(registry.BOT_SHUTDOWN, self)
         self.set_offline()
-        self.scheduler.shutdown()
+        try:
+            self.scheduler.shutdown()
+        except SchedulerNotRunningError:
+            pass
         self.rpcserver.shutdown()
         self.rpcserver.server_close()
         if self.connected:

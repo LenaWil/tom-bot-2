@@ -9,14 +9,14 @@ import dateutil.parser
 from yowsup.layers.protocol_messages.protocolentities \
         import TextMessageProtocolEntity
 
-from .registry import register_command, get_easy_logger
+from tombot.registry import Command, get_easy_logger
 from tombot.helper_functions import extract_query, determine_sender, reply_directly
 import tombot.datefinder as datefinder
 import tombot.rpc as rpc
 
 LOGGER = get_easy_logger('plugins.reminder')
 
-@register_command(['remind', 'remindme'])
+@Command(['remind', 'remindme'])
 @reply_directly
 def addreminder_cb(bot, message, *args, **kwargs):
     ''' (Hopefully) sends user a message at the given time '''

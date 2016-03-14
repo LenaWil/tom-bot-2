@@ -2,10 +2,11 @@
 
 HOME=/home/pi
 VENVDIR=$HOME/.virtualenvs/tombot
+CONFIGPATH=~/tombot/production.config
 
 source $VENVDIR/bin/activate
 cd ~/tombot
-tombot-run ~/tombot/production.config
+tombot-run $CONFIGPATH
 RETURN_CODE=$?
 if [[ $RETURN_CODE -eq 1 ]]
 	then pb push "Tombot has died."

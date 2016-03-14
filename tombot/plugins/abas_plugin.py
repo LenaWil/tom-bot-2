@@ -2,7 +2,7 @@
 ABAS: Automated Birthday Announcement System
 '''
 from apscheduler.jobstores.base import JobLookupError
-from .registry import get_easy_logger, register_startup, register_shutdown
+from tombot.registry import get_easy_logger, Subscribe, BOT_START, BOT_SHUTDOWN
 from tombot.rpc import remote_send
 
 
@@ -14,7 +14,7 @@ def announce_bday(name, recipient):
     body = 'Gefeliciteerd, {}!'.format(name)
     remote_send(body, recipient)
 
-@register_startup
+@Subscribe(BOT_START)
 def abas_register_cb(bot, *args, **kwargs):
     ''' Add jobs to the scheduler for all birthdays. '''
     LOGGER.info('Registering ABAs.')
@@ -35,7 +35,7 @@ def abas_register_cb(bot, *args, **kwargs):
             replace_existing=True, misfire_grace_time=86400
             )
 
-@register_shutdown
+@Subscribe(BOT_SHUTDOWN)
 def abas_deregister_cb(bot, *args, **kwargs):
     '''
     Remove jobs for birthday-announcing from scheduler.

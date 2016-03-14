@@ -5,7 +5,7 @@ import operator
 import random
 import re
 from tombot.helper_functions import extract_query
-from .registry import register_command
+from tombot.registry import Command
 
 # Dice rolling constants and function
 DICE_REGEX = r'(?P<number>\d+)d(?P<sides>\d+)\s?((?P<operator>\W)\s?(?P<modifier>\d+))?'
@@ -22,7 +22,7 @@ DICE_MODIFIER_OPERATORS = {
     '^': operator.pow,
     }
 
-@register_command('roll')
+@Command('roll')
 def diceroll_cb(bot, message, *args, **kwargs):
     '''
     Roll some dice!

@@ -16,7 +16,7 @@ import datetime
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
 from tombot.helper_functions import determine_sender, extract_query
-from .registry import register_command, message_handler, get_easy_logger
+from tombot.registry import Command, Subscribe, get_easy_logger, BOT_MSG_RECEIVE
 from .users_plugin import jid_to_nick, nick_to_jid, nick_to_id, isadmin
 
 
@@ -24,7 +24,7 @@ LOGGER = get_easy_logger('plugins.users.mentions')
 MENTION_PATTERN = r'(?<!\w)@\s?([^ .:,]+)[ .:,]?'
 MENTION_REGEX = re.compile(MENTION_PATTERN, re.IGNORECASE)
 
-@message_handler
+@Subscribe(BOT_MSG_RECEIVE)
 def mention_handler_cb(bot, message, *args, **kwargs):
     '''
     Scans message text for @mentions and notifies user if appropriate.
@@ -67,7 +67,7 @@ def mention_handler_cb(bot, message, *args, **kwargs):
             bot.toLower(entity)
             mentioned_sent.append(targetjid)
 
-@message_handler
+@Subscribe(BOT_MSG_RECEIVE)
 def update_lastseen_cb(bot, message, *args, **kwargs):
     ''' Updates the user's last seen time in the database. '''
     author = determine_sender(message)
@@ -77,7 +77,7 @@ def update_lastseen_cb(bot, message, *args, **kwargs):
                        (currenttime, message.getBody().decode('utf-8'), author))
     bot.conn.commit()
 
-@register_command(['timeout', 'settimeout'], 'mentions')
+@Command(['timeout', 'settimeout'], 'mentions')
 def get_jid_timeout(self, jid):
     '''
     Retrieve a user's lastactive and timeout.
@@ -95,7 +95,7 @@ def get_jid_timeout(self, jid):
 
     raise KeyError('Unknown jid {}'.format(jid))
 
-@register_command(['timeout', 'settimeout'], 'mentions')
+@Command(['timeout', 'settimeout'], 'mentions')
 def set_own_timeout_cb(bot, message, *args, **kwargs):
     '''
     Update your mention timeout.
@@ -115,7 +115,7 @@ def set_own_timeout_cb(bot, message, *args, **kwargs):
         return 'IT BROKE'
 
 # Admin
-@register_command('ftimeout', 'mentions', hidden=True)
+@Command('ftimeout', 'mentions', hidden=True)
 def set_other_timeout_cb(bot, message, *args, **kwargs):
     '''
     Update the timeout of any user.
