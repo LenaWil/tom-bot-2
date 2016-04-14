@@ -90,7 +90,6 @@ def main():
         stack.setProp(YowAuthenticationProtocolLayer.PROP_CREDENTIALS, credentials)
         stack.setProp(YowNetworkLayer.PROP_ENDPOINT, YowConstants.ENDPOINTS[0])
         stack.setProp(YowCoderLayer.PROP_DOMAIN, YowConstants.DOMAIN)
-        stack.setProp(YowCoderLayer.PROP_RESOURCE, env.CURRENT_ENV.getResource())
 
         # Send connect signal if we aren't poking at the bot
         if not args.poke:

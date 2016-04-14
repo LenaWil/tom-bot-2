@@ -46,6 +46,7 @@ def mention_handler_cb(bot, message, *args, **kwargs):
         # Who was mentioned?
         try:
             targetjid = nick_to_jid(bot, nick)
+            LOGGER.debug('Targetjid %s', targetjid)
         except KeyError as ex:
             # Some nick that is unknown, pass
             LOGGER.debug('Could not resolve nick %s', nick)
@@ -65,7 +66,10 @@ def mention_handler_cb(bot, message, *args, **kwargs):
             entity = TextMessageProtocolEntity('{}: {}'.format(
                 sendername, message.getBody()), to=targetjid)
             bot.toLower(entity)
+            LOGGER.debug('Sent mention with content %s to %s', message.getBody(), targetjid)
             mentioned_sent.append(targetjid)
+        else:
+            LOGGER.debug('Detected duplicate nick %s, skipping.', targetjid)
 
 @Subscribe(BOT_MSG_RECEIVE)
 def update_lastseen_cb(bot, message, *args, **kwargs):

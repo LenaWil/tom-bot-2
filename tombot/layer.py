@@ -24,6 +24,7 @@ from yowsup.layers.protocol_acks.protocolentities \
         import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_presence.protocolentities \
         import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
+from yowsup.layers.protocol_receipts import YowReceiptProtocolLayer
 from apscheduler.schedulers import SchedulerNotRunningError
 
 
@@ -125,9 +126,10 @@ class TomBotLayer(YowInterfaceLayer):
     def onReceipt(self, entity):
         ''' Sends acknowledgements for read receipts. '''
         # pylint: disable=invalid-name
-        ack = OutgoingAckProtocolEntity(
-            entity.getId(), 'receipt', entity.getType(), entity.getFrom())
-        self.toLower(ack)
+        #ack = OutgoingAckProtocolEntity(
+            #entity.getId(), 'receipt', entity.getType(), entity.getFrom())
+        logging.debug('Acking receipt')
+        self.toLower(entity.ack())
 
     def toLower(self, entity):
         ''' Intercept entites if not connected and warn user. '''
