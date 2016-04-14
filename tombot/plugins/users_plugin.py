@@ -50,7 +50,7 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
     '''
     cmd = extract_query(message)
 
-    if is_id(cmd):
+    if IS_ID(cmd):
         bot.cursor.execute(
             'SELECT id,jid,lastactive,primary_nick FROM users WHERE id = ?',
             (cmd,))
@@ -87,7 +87,7 @@ def add_own_nick_cb(bot, message, *args, **kwargs):
     newnick = cmdl[0].lower()
     if len(newnick) > 16:
         return 'Too long'
-    if is_id(newnick):
+    if IS_ID(newnick):
         return 'Pls'
     try:
         LOGGER.info('Nick %s added to jid %s', newnick, sender)
@@ -107,7 +107,7 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
     Specify a nick by id (see mynicks) or the nick itself.
     '''
     cmd = extract_query(message)
-    if is_id(cmd):
+    if IS_ID(cmd):
         bot.cursor.execute('SELECT id,name,jid FROM nicks WHERE id = ?',
                            (cmd,))
     else:

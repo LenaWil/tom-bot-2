@@ -6,10 +6,7 @@ import time
 import sqlite3
 import threading
 
-from . import plugins
-from .helper_functions import unknown_command
-import tombot.registry as registry
-import tombot.rpc as rpc
+from apscheduler.schedulers import SchedulerNotRunningError
 from yowsup.layers.interface \
         import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers \
@@ -20,12 +17,13 @@ from yowsup.layers.protocol_messages.protocolentities \
         import TextMessageProtocolEntity
 from yowsup.layers.protocol_receipts.protocolentities \
         import OutgoingReceiptProtocolEntity
-from yowsup.layers.protocol_acks.protocolentities \
-        import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_presence.protocolentities \
         import AvailablePresenceProtocolEntity, UnavailablePresenceProtocolEntity
-from yowsup.layers.protocol_receipts import YowReceiptProtocolLayer
-from apscheduler.schedulers import SchedulerNotRunningError
+
+from . import plugins
+from .helper_functions import unknown_command
+import tombot.registry as registry
+import tombot.rpc as rpc
 
 
 class TomBotLayer(YowInterfaceLayer):
