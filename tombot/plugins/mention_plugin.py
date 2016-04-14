@@ -12,6 +12,7 @@ This is useful for 'productive' chats with many messages.
 '''
 import re
 import datetime
+import operator
 
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
@@ -131,7 +132,9 @@ def set_other_timeout_cb(bot, message, *args, **kwargs):
     try:
         cmd = extract_query(message)
         cmdl = cmd.split()
-        if cmdl[0].isdigit():
+
+        is_id = operator.methodcaller('isdigit')
+        if is_id(cmdl[0]):
             id_ = int(cmdl[0])
         else:
             try:
@@ -142,6 +145,6 @@ def set_other_timeout_cb(bot, message, *args, **kwargs):
         bot.cursor.execute('UPDATE users SET timeout = ? WHERE id = ?',
                            (timeout, id_))
         bot.conn.commit()
-        return 'Timeout for user updated to {}'.format(id_)
+        return 'Timeout for user {} updated to {}'.format(id_, timeout)
     except ValueError:
         return 'IT BROKE'

@@ -3,11 +3,13 @@ Provides user and nickname management.
 '''
 import datetime
 import sqlite3
+import operator
 from tombot.helper_functions import determine_sender, extract_query, reply_directly
 from tombot.registry import Command, get_easy_logger
 
 
 LOGGER = get_easy_logger('plugins.users')
+IS_ID = operator.methodcaller('isdigit')
 
 # User
 @Command(['mynicks', 'lsnicks'], 'users')
@@ -48,7 +50,7 @@ def list_other_nicks_cb(bot, message, *args, **kwargs):
     '''
     cmd = extract_query(message)
 
-    if str.isdigit(cmd):
+    if IS_ID(cmd):
         bot.cursor.execute(
             'SELECT id,jid,lastactive,primary_nick FROM users WHERE id = ?',
             (cmd,))
@@ -85,7 +87,7 @@ def add_own_nick_cb(bot, message, *args, **kwargs):
     newnick = cmdl[0].lower()
     if len(newnick) > 16:
         return 'Too long'
-    if str.isdigit(newnick):
+    if IS_ID(newnick):
         return 'Pls'
     try:
         LOGGER.info('Nick %s added to jid %s', newnick, sender)
@@ -105,7 +107,7 @@ def remove_own_nick_cb(bot, message, *args, **kwargs):
     Specify a nick by id (see mynicks) or the nick itself.
     '''
     cmd = extract_query(message)
-    if str.isdigit(cmd):
+    if IS_ID(cmd):
         bot.cursor.execute('SELECT id,name,jid FROM nicks WHERE id = ?',
                            (cmd,))
     else:

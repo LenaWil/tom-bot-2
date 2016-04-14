@@ -26,7 +26,6 @@ from yowsup.stacks import YOWSUP_CORE_LAYERS
 from yowsup.common import YowConstants
 from yowsup.layers import YowLayerEvent, YowParallelLayer
 from yowsup.layers.axolotl import YowAxolotlLayer
-from yowsup import env
 
 
 def main():
