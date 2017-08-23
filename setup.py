@@ -9,8 +9,8 @@ setup(
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 2.7',
             ],
-        url='http://github.com/spasticVerbalizer/tom-bot',
-        author_email='schoenveter123+git@gmail.com',
+        url='http://github.com/maartenberg/tom-bot',
+        author_email='maartenberg1+git@gmail.com',
         license='MIT',
         packages=['tombot'],
         install_requires=[
@@ -19,7 +19,7 @@ setup(
             'configobj',
             ],
         dependency_links=[
-            'http://github.com/spasticVerbalizer/fortune/tarball/master#egg=fortune-1.1',
+            'http://github.com/maartenberg/fortune/tarball/master#egg=fortune-1.1',
             'git://github.com/tgalal/yowsup.git#egg=yowsupgit',
             ],
         entry_points = {
