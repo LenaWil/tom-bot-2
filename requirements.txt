@@ -1,4 +1,4 @@
-requests==2.9.1
+requests==2.20.0
 wolframalpha==1.2
 pushbullet-cli==0.7.1
 pylint==1.5.3
